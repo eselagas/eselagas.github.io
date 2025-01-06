@@ -401,32 +401,6 @@
 	    }
 	}
 
-	function loadTimerState() {
-	    const state = loadState('timerState');
-	    if (!state) return;
-
-	    const elapsedTime = Math.floor((Date.now() - state.timestamp) / 1000);
-	    
-	    if (state.isRunning) {
-	        timerTime = Math.max(0, state.remainingTime - elapsedTime);
-	    } else {
-	        timerTime = state.remainingTime;
-	    }
-	    
-	    updateTimerDisplay();
-	    
-	    if (timerTime > 0 && state.isRunning) {
-	        setTimeout(() => {
-	            startTimer();
-	            if (!isViewVisible('timer')) {
-	                showNotification('timer', `Timer running: ${formatTime(timerTime)} remaining`);
-	            }
-	        }, 0);
-	    } else if (timerTime > 0) {
-	        showNotification('timer', `Timer paused: ${formatTime(timerTime)} remaining`);
-	    }
-	}
-
 	// World Clock functionality
 	function updateWorldClock() {
 	    try {
