@@ -672,13 +672,6 @@
 	clickedItem.classList.add('active');
 	}
 
-	function showView(viewId) {
-	return function() {
-	hideAllViews();
-	document.getElementById(viewId).style.display = 'block';   
-	};
-	}
-
 	window.showClock = showView('clockView');
 	window.showStopwatch = showView('stopwatch');
 	window.showTimer = showView('timer');
