@@ -628,8 +628,6 @@
 	const visibleElement = document.querySelector('.feature-container[style*="display: block"], #clockView[style*="display: block"]');
 	const previousView = visibleElement ? visibleElement.id : null;
 
-	originalShowView(viewId)();
-
 	// Only show notification if there was a previous view
 	if (previousView) {
 	updateView(previousView);
