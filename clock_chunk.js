@@ -679,7 +679,6 @@
 	window.showWorldClock = showView('worldClock');
 
 	updateWorldClock();
-	showClock();
 	createClockMarkers();
 	updateClock();
 	setInterval(updateClock, 16.67);
