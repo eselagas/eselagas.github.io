@@ -1,149 +1,310 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Clock</title>
-    <meta name="keywords" content="Clock, Ethan, clock, Modern Clock, modern clock, Modern clock, Advanced clock, modern, timer, alarm, stopwatch, world clock">
-    <meta name="author" content="Ethan Selagea">
-    <meta name="description" content="Advanced and Modern online Clock with Timer, Stopwatch, Alarm and World Clock">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="stylesheet" href="./clock_styles.css">
-    <script src="./clock_chunk.js" defer></script>
+  <title>My Custom Start Page</title>
+  <style>
+    /* Basic Styles */
+    body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(120deg, #ff4081, #81d4fa);
+  background-size: 200% 200%;
+  animation: gradientAnimation 15s ease infinite;
+}
+
+@keyframes gradientAnimation {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+#background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  object-fit: cover;
+  opacity: 0.8;
+  filter: blur(2px);
+}
+
+#controls {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1;
+  display: flex;
+  gap: 10px;
+}
+
+#controls button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  padding: 10px 20px;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.3s;
+}
+
+#controls button:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: translateY(-5px);
+}
+
+#search-container {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+#search-bar {
+  width: 400px;
+  padding: 15px;
+  font-size: 18px;
+  border: none;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  outline: none;
+  backdrop-filter: blur(5px);
+  transition: background 0.3s;
+}
+
+#search-bar::placeholder {
+  color: #e0e0e0;
+}
+
+#search-bar:hover, #search-bar:focus {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+#search-buttons button {
+  padding: 12px 25px;
+  font-size: 16px;
+  margin-top: 20px;
+  margin-left: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid #fff;
+  border-radius: 30px;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.3s, border-color 0.3s;
+}
+
+#search-buttons button:hover {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: #ff4081;
+}
+
+#settings-button {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  padding: 12px 20px;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.3s;
+}
+
+#settings-button:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: rotate(90deg);
+}
+
+/* Settings Panel */
+#settings-panel {
+  position: fixed;
+  top: 0;
+  right: -320px;
+  width: 300px;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
+  backdrop-filter: blur(10px);
+  transition: right 0.5s ease;
+  padding: 20px;
+  box-sizing: border-box;
+  z-index: 2;
+}
+
+#settings-panel.open {
+  right: 0;
+}
+
+#settings-panel h2 {
+  margin-top: 0;
+  color: #ff4081;
+}
+
+#settings-panel label {
+  display: block;
+  margin-top: 25px;
+  color: #333;
+}
+
+#settings-panel input[type="file"] {
+  margin-top: 10px;
+}
+
+#close-settings {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* Hover effects */
+button, #search-bar {
+  transition: all 0.3s ease;
+}
+
+button:hover, #search-bar:focus {
+  transform: scale(1.05);
+}
+
+/* Moving backdrop */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background-repeat: no-repeat;
+  background-image: radial-gradient(circle at center, rgba(255,255,255,0.1), transparent);
+  animation: animateBG 30s linear infinite;
+}
+
+@keyframes animateBG {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(50%, 50%); }
+}
+  </style>
 </head>
 <body>
-    <div class="notification-banner timer">
-        <span class="icon">⏳</span>
-        <span class="message"></span>
+
+  <!-- Background Elements -->
+  <video id="background-video" autoplay loop muted playsinline></video>
+  <img id="background-image" alt="Background Image">
+  <audio id="background-audio" loop></audio>
+
+  <!-- Audio/Video Controls -->
+  <div id="controls">
+    <button id="play-pause">Pause</button>
+  </div>
+
+  <!-- Search Section -->
+  <div id="search-container">
+    <input type="text" id="search-bar" placeholder="Search...">
+    <div id="search-buttons">
+      <button onclick="performSearch('google')">Google</button>
+      <button onclick="performSearch('bing')">Bing</button>
     </div>
-    <div class="notification-banner alarm">
-        <span class="icon">⏰</span>
-        <span class="message"></span>
-    </div>
-    <div class="notification-banner stopwatch">
-        <span class="icon">⏱️</span>
-        <span class="message"></span>
-    </div>
-    
-    <div class="container">
-        <div id="clockView">
-            <div id="digitalClock">00:00</div>
-            <div id="dateDisplay"></div>
-            <div class="clock-container">
-                <div id="analogClock">
-                    <div class="hand hour" id="hourHand"></div>
-                    <div class="hand minute" id="minuteHand"></div>
-                    <div class="hand second" id="secondHand"></div>
-                    <div id="point"></div>
-                </div>
-            </div>
-        </div>
+  </div>
 
-        <div id="stopwatch" class="feature-container">
-            <div class="time-display" id="stopwatchDisplay">00:00:00.0</div>
-            <div class="button-container">
-                <button class="control-btn" id="startStopwatch">Start</button>
-                <button class="control-btn" id="resetStopwatch">Reset</button>
-            </div>
-        </div>
+  <!-- Settings Button -->
+  <button id="settings-button" onclick="toggleSettings()">Settings</button>
 
-        <div id="timer" class="feature-container">
-            <div class="time-display" id="timerDisplay">00:00:00</div>
-            <div class="button-container">
-                <button class="control-btn" id="setTimerBtn" onclick="handleTimer()">Set Timer</button>
-                <button class="control-btn" id="resetTimer">Reset</button>
-            </div>
-        </div>
+  <!-- Settings Panel -->
+  <div id="settings-panel">
+    <button id="close-settings" onclick="toggleSettings()">Close</button>
+    <h2>Customize Your Background</h2>
+    <label>
+      Upload Background Image:
+      <input type="file" accept="image/*" onchange="setBackgroundImage(event)">
+    </label>
+    <label>
+      Upload Background Video:
+      <input type="file" accept="video/*" onchange="setBackgroundVideo(event)">
+    </label>
+    <label>
+      Upload Background Audio:
+      <input type="file" accept="audio/*" onchange="setBackgroundAudio(event)">
+    </label>
+  </div>
 
-        <!-- Modal -->
-        <div class="modal-overlay" id="timerModal">
-            <div class="modal-content">
-                <div class="timer-input-container">
-                    <div class="timer-unit">
-                        <button onclick="adjustTime('hours', 1)">▲</button>
-                        <input type="number" id="hoursInput" min="0" max="99" value="0">
-                        <button onclick="adjustTime('hours', -1)">▼</button>
-                        <span>Hours</span>
-                    </div>
-                    <div class="timer-unit">
-                        <button onclick="adjustTime('minutes', 1)">▲</button>
-                        <input type="number" id="minutesInput" min="0" max="59" value="0">
-                        <button onclick="adjustTime('minutes', -1)">▼</button>
-                        <span>Minutes</span>
-                    </div>
-                    <div class="timer-unit">
-                        <button onclick="adjustTime('seconds', 1)">▲</button>
-                        <input type="number" id="secondsInput" min="0" max="59" value="0">
-                        <button onclick="adjustTime('seconds', -1)">▼</button>
-                        <span>Seconds</span>
-                    </div>
-                </div>
-                <div class="modal-buttons">
-                    <button class="control-btn" onclick="closeTimerModal()">Cancel</button>
-                    <button class="control-btn" onclick="setTimer()">Set Timer</button>
-                </div>
-            </div>
-        </div>
+  <script>
+    // Search Functionality
+    function performSearch(engine) {
+      const query = document.getElementById('search-bar').value;
+      if (query.trim() === '') return;
+      let url = '';
+      if (engine === 'google') {
+        url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+      } else if (engine === 'bing') {
+        url = `https://www.bing.com/search?q=${encodeURIComponent(query)}`;
+      }
+      window.location.href = url;
+    }
 
-        <div id="alarm" class="feature-container">
-            <input type="time" id="alarmTime" class="timezone-select">
-            <div class="time-display" id="nextAlarm">No alarm set</div>
-            <div class="button-container">
-                <button class="control-btn" id="setAlarm">Set Alarm</button>
-            </div>
-        </div>
+    // Background Customization
+    function setBackgroundImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const imgURL = URL.createObjectURL(file);
+        document.getElementById('background-image').src = imgURL;
+        document.getElementById('background-image').style.display = 'block';
+        document.getElementById('background-video').style.display = 'none';
+      }
+    }
 
-        <div id="worldClock" class="feature-container">
-            <select id="timezone" class="timezone-select">
-                <option value="Australia/Sydney">AEST</option>
-                <option value="Africa/Cairo">Africa - Cairo</option>
-                <option value="Africa/Nairobi">Nairobi</option>
-                <option value="America/Argentina/Buenos_Aires">Buenos Aires</option>
-                <option value="America/Chicago">Chicago</option>
-                <option value="America/Denver">Denver</option>
-                <option value="America/Los_Angeles">Los Angeles</option>
-                <option value="America/Mexico_City">Mexico City</option>
-                <option value="America/New_York">New York</option>
-                <option value="America/Sao_Paulo">São Paulo</option>
-                <option value="Asia/Dubai">Dubai</option>
-                <option value="Asia/Hong_Kong">Hong Kong</option>
-                <option value="Asia/Kathmandu">Kathmandu</option>
-                <option value="Asia/Kolkata">Kolkata</option>
-                <option value="Asia/Seoul">Seoul</option>
-                <option value="Asia/Singapore">Singapore</option>
-                <option value="Asia/Tokyo">Tokyo</option>
-                <option value="Australia/Adelaide">Adelaide</option>
-                <option value="Australia/Brisbane">Brisbane</option>
-                <option value="Australia/Hobart">Hobart</option>
-                <option value="Australia/Melbourne">Melbourne</option>
-                <option value="Australia/Perth">Perth</option>
-                <option value="Australia/Sydney">Australia - Sydney</option>
-                <option value="Europe/Amsterdam">Amsterdam</option>
-                <option value="Europe/Berlin">Berlin</option>
-                <option value="Europe/London">London</option>
-                <option value="Europe/Moscow">Moscow</option>
-                <option value="Europe/Paris">Paris</option>
-                <option value="Europe/Bucharest">Bucharest, Romania</option>
-                <option value="Europe/Rome">Rome</option>
-                <option value="Indian/Chagos">Chagos</option>
-                <option value="Pacific/Auckland">Auckland</option>
-                <option value="Pacific/Fiji">Suva</option>
-                <option value="Pacific/Guam">Guam</option>
-                <option value="Pacific/Honolulu">Honolulu</option>
-                <option value="Pacific/Tahiti">Papeete</option>
-                <option value="UTC">UTC</option>
-            </select>
-            <div class="time-display" id="worldTime">00:00</div>
-        </div>
-    </div>
+    function setBackgroundVideo(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const videoURL = URL.createObjectURL(file);
+        const videoElement = document.getElementById('background-video');
+        videoElement.src = videoURL;
+        videoElement.style.display = 'block';
+        document.getElementById('background-image').style.display = 'none';
+      }
+    }
 
-    <div id="menu">
-        <div class="menuItem" onclick="activateMenuItem(this); showStopwatch()">Stopwatch</div>
-        <div class="menuItem" onclick="activateMenuItem(this); showTimer()">Timer</div>
-        <div class="menuItem active" onclick="activateMenuItem(this); showClock()">Clock</div>
-        <div class="menuItem" onclick="activateMenuItem(this); showAlarm()">Alarm</div>
-        <div class="menuItem" onclick="activateMenuItem(this); showWorldClock()">World Clock</div>
-    </div>
-<noscript>Please enable JavaScript to use this app.</noscript>
+    function setBackgroundAudio(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const audioURL = URL.createObjectURL(file);
+        const audioElement = document.getElementById('background-audio');
+        audioElement.src = audioURL;
+        audioElement.play();
+      }
+    }
+
+    // Play/Pause Control
+    document.getElementById('play-pause').addEventListener('click', () => {
+      const audio = document.getElementById('background-audio');
+      const video = document.getElementById('background-video');
+      const isPaused = audio.paused && video.paused;
+
+      if (isPaused) {
+        audio.play();
+        video.play();
+        document.getElementById('play-pause').textContent = 'Pause';
+      } else {
+        audio.pause();
+        video.pause();
+        document.getElementById('play-pause').textContent = 'Play';
+      }
+    });
+
+    // Settings Panel Toggle
+    function toggleSettings() {
+      const panel = document.getElementById('settings-panel');
+      panel.classList.toggle('open');
+    }
+  </script>
 </body>
 </html>
