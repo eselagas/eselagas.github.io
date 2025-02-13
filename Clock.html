@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="#" id="favicon">
+    <title>Clock</title>
+</head>
+<body>
+	<div class="notification-banner timer">
+        <span class="icon">⏳</span>
+        <span class="message"></span>
+    </div>
+    <div class="notification-banner alarm">
+        <span class="icon">⏰</span>
+        <span class="message"></span>
+    </div>
+    <div class="notification-banner stopwatch">
+        <span class="icon">⏱️</span>
+        <span class="message"></span>
+    </div>
+    
+    <div class="container">
+        <div id="clockView">
+            <div id="digitalClock">00:00</div>
+            <div id="dateDisplay"></div>
+            <div class="clock-container">
+                <div id="analogClock">
+                    <div class="hand hour" id="hourHand"></div>
+                    <div class="hand minute" id="minuteHand"></div>
+                    <div class="hand second" id="secondHand"></div>
+                    <div id="point"></div>
+                </div>
+            </div>
+        </div>
+
+	<div id="stopwatch" class="feature-container">
+            <div class="time-display" id="stopwatchDisplay">00:00:00.0</div>
+            <div class="button-container">
+                <button class="control-btn" id="startStopwatch">Start</button>
+                <button class="control-btn" id="resetStopwatch">Reset</button>
+            </div>
+        </div>
+
+		<div id="timer" class="feature-container">
+            <div class="time-display" id="timerDisplay">00:00:00</div>
+            <div class="button-container">
+                <button class="control-btn" id="setTimerBtn" onclick="handleTimerClick()">Set Timer</button>
+                <button class="control-btn" id="resetTimer" onclick="resetTimer()">Reset</button>
+            </div>
+        </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="timerModal">
+        <div class="modal-content">
+            <div class="timer-input-container">
+                <div class="timer-unit">
+                    <button onclick="adjustTime('hours', 1)">▲</button>
+                    <input type="number" id="hoursInput" min="0" max="99" value="0">
+                    <button onclick="adjustTime('hours', -1)">▼</button>
+                    <span>Hours</span>
+                </div>
+                <div class="timer-unit">
+                    <button onclick="adjustTime('minutes', 1)">▲</button>
+                    <input type="number" id="minutesInput" min="0" max="59" value="0">
+                    <button onclick="adjustTime('minutes', -1)">▼</button>
+                    <span>Minutes</span>
+                </div>
+                <div class="timer-unit">
+                    <button onclick="adjustTime('seconds', 1)">▲</button>
+                    <input type="number" id="secondsInput" min="0" max="59" value="0">
+                    <button onclick="adjustTime('seconds', -1)">▼</button>
+                    <span>Seconds</span>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="control-btn" onclick="closeTimerModal()">Cancel</button>
+                <button class="control-btn" onclick="setTimer()">Set Timer</button>
+            </div>
+        </div>
+    </div>
+
+        <div id="alarm" class="feature-container">
+            <div class="time-display" id="nextAlarm">No alarm set</div>
+            <div class="button-container">
+                <button class="control-btn" id="setAlarm">Set Alarm</button>
+            </div>
+        </div>
+        
+        <!-- Alarm Setup Modal -->
+        <div class="modal-overlay" id="alarmModal">
+		    <div class="modal" id="alarmSetupModal">
+		    	<div class="modal-content">
+		            <h2 style="margin-bottom: 15px; text-align: center">Set Alarm</h2>
+		            <div class="form-group">
+		                <input type="time" id="alarmTimeInput" class="timezone-select" required>
+		            </div>
+		            
+		            <div class="form-group">
+		                <label for="alarmTitleInput">Title</label>
+		                <input type="text" id="alarmTitleInput" class="ringtone-select" placeholder="Alarm name...">
+		            </div>
+		            
+		            <div class="form-group">
+		                <label for="alarmSoundSelect">Ringtone</label>
+		                <select id="alarmSoundSelect" class="ringtone-select">
+		                    <option value="default">Default</option>
+		                    <option value="stardrop">Stardrop</option>
+		                    <option value="lucidity">Lucidity</option>
+		                    <option value="dreamscape">Dreamscape</option>
+		                </select>
+		            </div>
+		            
+		            <div class="form-group">
+		                <input type="file" id="customSoundUpload" accept="audio/*" style="display:none;">
+		                <button id="uploadSoundBtn" class="acontrol-btn">Upload Sound</button>
+		            </div>
+		            
+		            <div class="form-group">
+		                <input type="checkbox" id="repeatAlarmCheckbox">
+		                <label for="repeatAlarmCheckbox">Repeat Until Stopped</label>
+		            </div>
+		            
+		            <div class="modal-actions">
+		                <button id="saveAlarmBtn" class="acontrol-btn">Save Alarm</button>
+		                <button id="cancelAlarmBtn" class="acontrol-btn">Cancel</button>
+		            </div>
+		        </div>
+		    </div>
+		    
+		    <div id="alarmRingingModal" class="modal" style="display:none;">
+		        <div class="modal-content">
+		            <h2 id="alarmRingingTitle" style="margin-bottom: 15px">Alarm</h2>
+		            <p>Alarm Ringing!</p>
+		            <button id="stopAlarmBtn" class="acontrol-btn" style="margin-top: 15px" >Stop Alarm</button>
+		        </div>
+		    </div>
+		 </div>
+
+        <div id="worldClock" class="feature-container">
+		<select id="timezone" class="timezone-select">
+			<option value="Australia/Sydney">AEST</option>
+		    <option value="Africa/Cairo">Africa - Cairo</option>
+		    <option value="Africa/Nairobi">Nairobi</option>
+		    <option value="America/Argentina/Buenos_Aires">Buenos Aires</option>
+		    <option value="America/Chicago">Chicago</option>
+		    <option value="America/Denver">Denver</option>
+		    <option value="America/Los_Angeles">Los Angeles</option>
+		    <option value="America/Mexico_City">Mexico City</option>
+		    <option value="America/New_York">New York</option>
+		    <option value="America/Sao_Paulo">São Paulo</option>
+		    <option value="Asia/Dubai">Dubai</option>
+		    <option value="Asia/Hong_Kong">China, Hong Kong</option>
+		    <option value="Asia/Kathmandu">Kathmandu</option>
+		    <option value="Asia/Kolkata">Kolkata</option>
+		    <option value="Asia/Seoul">Seoul</option>
+		    <option value="Asia/Singapore">Singapore</option>
+		    <option value="Asia/Tokyo">Japan, Tokyo</option>
+		    <option value="Australia/Hobart">Tasmania, Hobart</option>
+		    <option value="Australia/Melbourne">Melbourne</option>
+		    <option value="Australia/Perth">Perth</option>
+		    <option value="Australia/Sydney">Australia - Sydney</option>
+		    <option value="Europe/Amsterdam">Amsterdam</option>
+		    <option value="Europe/Berlin">Berlin</option>
+		    <option value="Europe/London">London</option>
+		    <option value="Europe/Moscow">Moscow</option>
+		    <option value="Europe/Paris">Paris</option>
+		    <option value="Europe/Bucharest">Bucharest, Romania</option>
+		    <option value="Europe/Rome">Rome</option>
+		    <option value="Indian/Chagos">Chagos</option>
+		    <option value="Pacific/Auckland">Auckland</option>
+		    <option value="Pacific/Fiji">Suva</option>
+		    <option value="Pacific/Guam">Guam</option>
+		    <option value="Pacific/Honolulu">Honolulu</option>
+		    <option value="Pacific/Tahiti">Papeete</option>
+		    <option value="UTC">UTC</option>
+		</select>
+            <div class="time-display" id="worldTime">00:00</div>
+        </div>
+    </div>
+
+    <div id="menu">
+        <div class="menuItem" onclick="activateMenuItem(this); showStopwatch()">Stopwatch</div>
+        <div class="menuItem" onclick="activateMenuItem(this); showTimer()">Timer</div>
+        <div class="menuItem active" onclick="activateMenuItem(this); showClock()">Clock</div>
+        <div class="menuItem" onclick="activateMenuItem(this); showAlarm()">Alarm</div>
+        <div class="menuItem" onclick="activateMenuItem(this); showWorldClock()">World Clock</div>
+    </div>
+</div>
+    <script>
+    // fetching
+	fetch('https://raw.githubusercontent.com/eselagas/main/refs/heads/main/app%20code/Clock%20-%20Styles.css')
+	.then(response => response.text())
+	.then(cssText => {
+	    const style = document.createElement('style');
+	    style.textContent = cssText;
+	    document.head.append(style);
+	})
+	.catch(error => console.error('Error loading CSS:', error));
+	
+    fetch('https://raw.githubusercontent.com/eselagas/main/refs/heads/main/app%20code/Clock%20-%20Script.js')
+        .then(response => response.text())
+        .then(scriptText => {
+            const script = document.createElement('script');
+            script.textContent = scriptText;
+            document.body.append(script);
+        })
+        .catch(error => console.error('Error loading script:', error));
+	
+    // favicon
+    	function updateFavicon() {
+            // Create canvas for favicon
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+
+            const now = new Date();
+            const hours = now.getHours() % 12;
+            const minutes = now.getMinutes();
+
+            ctx.clearRect(0, 0, 64, 64);
+			
+			// outline
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#acacac';
+            ctx.lineWidth = 0.4;
+            ctx.beginPath();
+            ctx.arc(32, 32, 30, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Calculate hand angles
+            const hourAngle = (hours * 30 + minutes * 0.5) * Math.PI / 180;
+            const minuteAngle = minutes * 6 * Math.PI / 180;
+            
+            // Set hand styles
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#333333';
+            
+            // Draw hour hand
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(32, 32);
+            ctx.lineTo(
+                32 + Math.sin(hourAngle) * 14,
+                32 - Math.cos(hourAngle) * 14
+            );
+            ctx.stroke();
+            
+            // Draw minute hand
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+            ctx.moveTo(32, 32);
+            ctx.lineTo(
+                32 + Math.sin(minuteAngle) * 20,
+                32 - Math.cos(minuteAngle) * 20
+            );
+            ctx.stroke();
+            
+            // Draw center point
+            ctx.fillStyle = '#121212';
+            ctx.beginPath();
+            ctx.arc(32, 32, 2, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Update favicon
+            document.getElementById('favicon').href = canvas.toDataURL();
+        }
+    </script>
+</body>
+</html>
