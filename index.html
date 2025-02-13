@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="#" id="favicon">
+    <link rel="stylesheet" href="styles.css">
     <title>Clock</title>
 </head>
 <body>
@@ -187,26 +188,8 @@
         <div class="menuItem" onclick="activateMenuItem(this); showWorldClock()">World Clock</div>
     </div>
 </div>
+    <script src="script.js"></script>
     <script>
-    // fetching
-	fetch('https://raw.githubusercontent.com/eselagas/main/refs/heads/main/app%20code/Clock%20-%20Styles.css')
-	.then(response => response.text())
-	.then(cssText => {
-	    const style = document.createElement('style');
-	    style.textContent = cssText;
-	    document.head.append(style);
-	})
-	.catch(error => console.error('Error loading CSS:', error));
-	
-    fetch('https://raw.githubusercontent.com/eselagas/main/refs/heads/main/app%20code/Clock%20-%20Script.js')
-        .then(response => response.text())
-        .then(scriptText => {
-            const script = document.createElement('script');
-            script.textContent = scriptText;
-            document.body.append(script);
-        })
-        .catch(error => console.error('Error loading script:', error));
-	
     // favicon
     	function updateFavicon() {
             // Create canvas for favicon
