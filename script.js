@@ -796,8 +796,6 @@
 	        window.showAlarm = showView('alarm');
 	        window.showWorldClock = showView('worldClock');
 	        
-	        setInterval(updateFavicon, 1000);
-	        
 	        updateWorldClock();
 	        showClock();
 	        createClockMarkers();
