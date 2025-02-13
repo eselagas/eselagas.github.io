@@ -796,14 +796,13 @@
 	        window.showAlarm = showView('alarm');
 	        window.showWorldClock = showView('worldClock');
 	        
-	        updateFavicon();
 	        setInterval(updateFavicon, 1000);
 	        
 	        updateWorldClock();
 	        showClock();
 	        createClockMarkers();
 	        updateClock();
-			setInterval(updateClock, 16.67);
+		setInterval(updateClock, 16.67);
 	        setInterval(updateWorldClock, 1000);
 	        loadTimerState();
 	        loadStopwatchState();
