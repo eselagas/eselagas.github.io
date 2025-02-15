@@ -250,6 +250,9 @@
             // Update favicon
             document.getElementById('favicon').href = canvas.toDataURL();
         }
+
+	updateFavicon();
+	setInterval(updateFavicon, 1000);
     </script>
 </body>
 </html>
