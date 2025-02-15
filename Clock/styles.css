@@ -1,0 +1,824 @@
+    * {
+	        margin: 0;
+	        padding: 0;
+	        box-sizing: border-box;
+        }
+
+        
+        .notification-banner {
+            position: absolute;
+            top: -90px;
+            transform: translateY(-100%);
+            background: rgba(244, 244, 244, 0.97);
+            color: #333;
+            padding: 12px 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.95em;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-width: 280px;
+            max-width: 90%;
+            margin: 15px;
+        }
+
+        .notification-banner.show {
+            transform: translateX(-50%) translateY(0);
+            top: 0;
+        }
+
+        .notification-banner .icon {
+            font-size: 1.4em;
+            opacity: 0.8;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .notification-banner .message {
+            font-weight: 500;
+            letter-spacing: 0.2px;
+        }
+
+        .notification-banner.timer .icon {
+            color: #2196F3;
+        }
+
+        .notification-banner.alarm .icon {
+            color: #FF5722;
+        }
+
+        .notification-banner.stopwatch .icon {
+            color: #4CAF50;
+        }
+
+        @keyframes slideIn {
+            0% {
+                transform: translateX(-50%) translateY(-100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            0% {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(-50%) translateY(-100%);
+                opacity: 0;
+            }
+        }
+
+        .notification-banner.show {
+            animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .notification-banner.hide {
+            animation: slideOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+            color: #333;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow: hidden;
+        }
+
+        .container {
+	    display: flex;
+	    flex-direction: column;
+	    align-items: center;
+	    gap: 30px;
+	    position: relative;
+	    width: 100%;
+	    max-width: 1200px;
+	    margin: 0 auto;
+	    padding: 20px;
+	    box-sizing: border-box;
+	}
+
+        #digitalClock {
+            font-size: 4.5em;
+            font-weight: 300;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        #digitalClock:hover {
+            transform: scale(1.06);
+        }
+
+        .clock-container {
+	    position: relative;
+	    width: min(300px, 90vw);
+	    height: min(300px, 90vw);
+	    margin: 30px 0;
+	    transition: transform 0.3s ease;
+	}
+
+        .clock-container:hover {
+            transform: scale(1.02);
+        }
+
+        #analogClock {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.1),
+                inset 0 0 30px rgba(255, 255, 255, 0.5);
+            transform: scale(0.5);
+            opacity: 0;
+            filter: blur(10px);
+            animation: clockEntrance 1s ease-out forwards;
+        }
+        
+        @keyframes clockEntrance {
+            0% {
+                transform: scale(0.3);
+                opacity: 0;
+                filter: blur(15px);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+                filter: blur(0);
+            }
+        }
+
+	.hand {
+            position: absolute;
+            background: #666;
+            border-radius: 5px;
+            transform-origin: 100%;
+            transition: transform 0.1s cubic-bezier(0.4, 2.08, 0.55, 0.44);
+        }
+	
+	/* Hour hand */
+	.hour { width: 34%; height: 4px; left: 16%; }
+        .minute { width: 43%; height: 3px; left: 7%; }
+        .second {
+            width: 44%;
+            height: 2px;
+            background: #999;
+            left: 6%;
+            transition: none;
+            transform-origin: 100%;
+        }
+
+	#point {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #666, #333);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .marker {
+            position: fixed;
+            width: 3px;
+            height: 15px;
+            background: rgba(87, 87, 87, 0.6);
+            border-radius: 3px;
+            transform-origin: 50% 150px;
+            transition: all 0.5s ease;
+            bottom: 285px;
+        }
+        
+        .sub-marker {
+            position: fixed;
+            width: 3px;
+            background: rgba(151, 151, 151, 0.5);
+            border-radius: 3px;
+            transform-origin: 50% 150px;
+	    top: 0px;
+        }
+
+        #menu {
+            position: fixed;
+            bottom: 30px;
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            box-shadow: 0 8px 64px rgba(0, 0, 0, 0.1);
+        }
+
+        .menuItem {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.8);
+            color: #333;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
+            position: relative;
+        }
+
+        .menuItem.active {
+            background: #333;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .menuItem:hover {
+            background: #344;
+            color: white;
+            transform: translateY(-3px);
+        }
+        
+        .menuItem.active:hover {
+            transform: scale(1.1) translateY(-3px);
+        }
+
+        .feature-container {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 20px;
+            margin: 20px auto;
+            width: 300px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feature-container:hover {
+            transform: translateY(-2px);
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 15px;
+            background: #333;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 0 1 auto; /* Added */
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .acontrol-btn {
+            padding: 6px 12px;
+            margin: 2px;
+            border: none;
+            border-radius: 15px;
+            background: #333;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 0 1 auto;
+        }
+
+        .acontrol-btn:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .button-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .time-display {
+            font-size: 2.5em;
+            margin-top: 5px;
+            margin-bottom: 14px;
+            font-weight: 300;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+        }
+        
+        .form-group {
+        	margin: 7px;
+        }
+
+        .timezone-select {
+	    padding: 12px 35px 12px 15px;
+	    outline: none;
+	    margin: 10px auto;
+	    border-radius: 15px;
+	    background: rgba(255, 255, 255, 0.9);
+	    color: #333;
+	    border: 1px solid rgba(0, 0, 0, 0.1);
+	    transition: all 0.3s ease;
+	    width: 80%;
+	    display: block;
+	    font-size: 16px;
+	    -webkit-appearance: none;
+	    -moz-appearance: none;
+	    appearance: none;
+	    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+	    background-repeat: no-repeat;
+	    background-position: right 10px center;
+	    background-size: 16px;
+	    cursor: pointer;
+	}
+
+        .timezone-select:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .timezone-select option {
+            background: #fff;
+            color: #333;
+        }
+        
+        .ringtone-select {
+            padding: 5px;
+	    outline: none;
+	    margin: 10px auto;
+	    border-radius: 4px;
+	    background: rgba(255, 255, 255, 0.9);
+	    color: #333;
+	    border: 1px solid rgba(0, 0, 0, 0.1);
+	    transition: all 0.3s ease;
+	    display: block;
+	    font-size: 16px;
+	    cursor: pointer;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.62); }
+            100% { transform: scale(1); }
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease-out;
+            max-width: 90%;
+            width: 400px;
+        }
+
+		.modal-buttons {
+		    display: flex;
+		    justify-content: center;
+		    gap: 10px;
+		}
+		
+		.modal {
+			justify-content: center;
+		}
+		
+		.modal-actions {
+			display: flex;
+			justify-content: center;
+			margin-top: 20px;
+		}
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .alarm-active {
+            animation: pulse 1s infinite;
+        }
+        
+        .timer-input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+
+        .timer-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .timer-unit button {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #333;
+            padding: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .timer-unit button:hover {
+            color: #666;
+            transform: scale(1.1);
+        }
+
+        .timer-unit input {
+            width: 50px;
+            text-align: center;
+            font-size: 1.2em;
+            border: none;
+            background: none;
+            padding: 5px;
+            margin: 5px 0;
+        }
+
+        .timer-unit span {
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        /* Hide number input arrows */
+        .timer-unit input::-webkit-inner-spin-button,
+        .timer-unit input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Date display addition */
+        #dateDisplay {
+            font-size: 1.2em;
+            color: #666;
+            margin-top: 10px;
+            font-weight: 300;
+            text-align: center;
+        }
+        
+        /* Modifications */
+        #clockView {
+        	margin-bottom: 15vh;
+        }
+        
+        #stopwatch {
+        	width: 230px;
+        }
+        
+        .timer-unit input::-webkit-inner-spin-button,
+        .timer-unit input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        /* Phone Screen Modifications */
+        @media screen and (max-width: 768px) {
+	    body {
+	        padding: 10px;
+	        min-height: 100svh;
+	    }
+
+	    .timezone-select {
+	        width: 90%;
+	        max-width: 300px;
+	        padding: 10px 35px 10px 12px;
+	        font-size: 14px;
+	    }
+	
+	    /* Improve the native select menu appearance on mobile */
+	    .timezone-select:focus {
+	        border-color: rgba(0, 0, 0, 0.2);
+	        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+	    }
+	
+	    /* Custom styling for Android */
+	    .timezone-select::-webkit-listbox {
+	        background-color: rgba(255, 255, 255, 0.95);
+	        border-radius: 10px;
+	        max-height: 40vh;
+	    }
+		
+		@supports (-webkit-touch-callout: none) {
+	        .timezone-select {
+	            background-color: rgba(255, 255, 255, 0.95);
+	            backdrop-filter: blur(10px);
+	            -webkit-backdrop-filter: blur(10px);
+	        }
+	    }
+				
+
+	    .container {
+	        gap: 15px;
+	        padding-top: 30px;
+	    }
+
+	    #digitalClock {
+	        font-size: 3.2em; /* Smaller font size for mobile */
+	        margin-bottom: 15px;
+	    }
+
+	    .clock-container {
+	        width: 250px; /* Smaller clock size */
+	        height: 250px;
+	    }
+
+	    #menu {
+	        bottom: 15px;
+	        padding: 10px;
+	        flex-wrap: wrap; /* Allow wrapping for smaller screens */
+	        justify-content: center;
+	        width: 90%;
+	        max-width: 350px;
+	        gap: 8px;
+	    }
+
+	    .menuItem {
+	        padding: 8px 16px;
+	        font-size: 0.85em;
+	        border-radius: 15px;
+	    }
+
+	    .feature-container {
+	        width: 90%;
+	        max-width: 300px;
+	        padding: 15px;
+	    }
+
+	    .time-display {
+	        font-size: 2em;
+	    }
+
+	    .control-btn {
+	        padding: 8px 16px;
+	        font-size: 0.9em;
+	        min-width: 50px; /* Ensure buttons are tap-friendly */
+	    }
+
+	    .button-container {
+	        gap: 8px;
+	    }
+
+	    .timer-input-container {
+	        gap: 5px;
+	    }
+
+	    .timer-unit {
+	        padding: 8px;
+	    }
+
+	    .timer-unit input {
+	        width: 40px;
+	        font-size: 1.1em;
+	        padding: 3px;
+	    }
+
+	    .notification-banner {
+	        max-width: 95%;
+	        padding: 10px 20px;
+	        font-size: 0.9em;
+	        margin: 10px;
+	    }
+
+	    .marker {
+	        height: 15px;
+	        bottom: 235px;
+	    }
+
+	    .sub-marker {
+	        bottom: 237.5px;
+	        height: 8px;
+    		width: 2px;
+	    }
+	    
+	    .marker, .sub-marker {
+        	transform-origin: 50% 125px;
+    	    }
+
+	    .hour { 
+        	width: 30%;
+        	height: 4px;
+		left: 50px;
+	    }
+	    
+	    .minute { 
+	        width: 40%;
+	        height: 3px;
+		left: 25px;
+	    }
+	    
+	    .second { 
+	        width: 43%;
+		left: 7%;
+	        height: 2px;
+	    }
+		
+		}
+
+		@media (hover: none) {
+	        .menuItem:hover, .control-btn:hover {
+	            transform: none;
+	        }
+		.menuItem.active:hover {
+			transform: none;
+		}
+	
+	        .menuItem:active, .control-btn:active {
+	            transform: scale(1.05);
+	        }
+	    }
+
+		@media (prefers-color-scheme: dark) {
+		    :root {
+		        color-scheme: dark;
+		    }
+
+		    body {
+		        background: linear-gradient(135deg, #121212, #1a1a1a);
+		        color: #e0e0e0;
+		    }
+
+		    #analogClock {
+		        background: rgba(28, 28, 28, 0.95);
+		        border: none;
+		        box-shadow: 
+		            0 10px 30px rgba(0, 0, 0, 0.4),
+		            inset 0 0 30px rgb(255 255 255 / 45%)
+		    }
+
+		    #digitalClock {
+		        color: #e0e0e0;
+		        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+		    }
+
+		    .hand {
+		        background: #d4d4d4;
+		    }
+
+		    .second {
+		        background: #787878;
+		    }
+
+		    #point {
+		        background: linear-gradient(135deg, #bebebe, #888);
+		        box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+		    }
+
+		    .marker {
+		        background: rgba(212, 212, 212, 0.7);
+		    }
+
+		    .sub-marker {
+		        background: rgba(180, 180, 180, 0.6);
+		    }
+
+		    #menu {
+		        background: rgba(28, 28, 28, 0.9);
+		        box-shadow: 0 8px 64px rgba(0, 0, 0, 0.2);
+		    }
+
+		    .menuItem {
+		        background: rgba(40, 40, 40, 0.95);
+		        color: #e0e0e0;
+		        border: 1px solid rgba(255, 255, 255, 0.08);
+		    }
+
+		    .menuItem.active {
+		        background: #e0e0e0;
+		        color: #121212;
+		    }
+
+		    .menuItem:hover {
+		        background: #404040;
+		        color: #ffffff;
+		    }
+
+		    .menuItem.active:hover {
+			background: #cccccc;
+			color: #595959;
+		    }
+
+		    .feature-container {
+		        background: rgb(38 38 38 / 95%);
+		        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+		    }
+
+		    .notification-banner {
+		        background: rgba(28, 28, 28, 0.97);
+		        color: #e0e0e0;
+		        border: 1px solid rgba(45, 45, 45, 0.3);
+		        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+		    }
+
+		    .control-btn {
+		        background: #404040;
+		        color: #e0e0e0;
+		    }
+
+		    .control-btn:hover {
+		        background: #505050;
+		    }
+
+		    .timer-unit {
+		        background: rgba(40, 40, 40, 0.95);
+		    }
+
+		    .timer-unit button {
+		        color: #e0e0e0;
+		    }
+
+		    .timer-unit span {
+		        color: #a0a0a0;
+		    }
+
+		    .timezone-select {
+		        background-color: rgba(40, 40, 40, 0.95);
+		        color: #e0e0e0;
+		        border: 1px solid rgba(255, 255, 255, 0.08);
+		    }
+
+		    .timezone-select:hover {
+		        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+		    }
+
+		    .timezone-select option {
+		        background: #282828;
+		        color: #e0e0e0;
+		    }
+		}
+
+			#analogClock {
+			    position: relative;
+			    display: flex;
+			    align-items: center;
+			    justify-content: center;
+			}
+			
+			/* Updated button animations */
+			.menuItem, .control-btn {
+			    transition: transform 0.2s ease;
+			}
+
+			.menuItem:hover, .control-btn:hover {
+			    transform: scale(1.05);
+			}
+
+			.menuItem:active, .control-btn:active {
+			    transform: scale(0.98);
+			}
