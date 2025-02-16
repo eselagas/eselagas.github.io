@@ -392,7 +392,7 @@
 			    currentAlarmSound.play();
 
 			    alarmModal.style.display = 'flex';
-			    alarmRingingModal.style.display = 'block';
+			    alarmRingingModal.style.display = 'flex';
 			}
 
 			// Stop Alarm
