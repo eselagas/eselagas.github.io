@@ -6,7 +6,7 @@
     <title>Redirecting...</title>
 </head>
 <body>
-    <h1 id="info">If you are not redirected in the next 3 seconds, click <a href="#" id="rlink">here</a></h1>
+    <p id="info">If you are not redirected in the next 3 seconds, click <a href="#" id="rlink">here</a></p>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const params = new URLSearchParams(window.location.search);
@@ -14,7 +14,7 @@
                   const redirectUrl = params.get('r');
                   document.getElementById('rlink').href = redirectUrl;
                   window.location.href = './' + redirectUrl;
-                } else { document.getElementById('info').innerHTML = 'No URL provided';
+                } else { document.getElementById('info').innerHTML = 'No URL provided';}
         });
     </script>
 </body>
