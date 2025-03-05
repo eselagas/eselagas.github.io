@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Redirecting...</title>
+</head>
+<body>
+    <h1 id="info">If you are not redirected in the next 3 seconds, click <a href="#" id="rlink">here</a></h1>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const params = new URLSearchParams(window.location.search);
+              const redirectUrl = params.get('r');              
+              document.getElementById('rlink').href = redirectUrl;
+              window.location.href = './' + redirectUrl;
+        });
+    </script>
+</body>
+</html>
