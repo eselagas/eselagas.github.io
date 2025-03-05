@@ -10,9 +10,11 @@
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const params = new URLSearchParams(window.location.search);
-              const redirectUrl = params.get('r');              
-              document.getElementById('rlink').href = redirectUrl;
-              window.location.href = './' + redirectUrl;
+                if (params.has('r')) {
+                  const redirectUrl = params.get('r');
+                  document.getElementById('rlink').href = redirectUrl;
+                  window.location.href = './' + redirectUrl;
+                } else { document.getElementById('info').innerHTML = 'No URL provided';
         });
     </script>
 </body>
