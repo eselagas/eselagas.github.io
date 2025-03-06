@@ -13,7 +13,7 @@
                 if (params.has('r')) {
                   let redirectUrl = params.get('r');
                     if (params.has('u')) {
-                        redirectUrl = redirectUrl + params.get('u');
+                        redirectUrl = redirectUrl + '?' + params.get('u');
                     }
                   document.getElementById('rlink').href = redirectUrl;
                   window.location.href = './' + redirectUrl;
