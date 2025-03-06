@@ -11,7 +11,7 @@
         document.addEventListener("DOMContentLoaded", function() {
             const params = new URLSearchParams(window.location.search);
                 if (params.has('r')) {
-                  const redirectUrl = params.get('r');
+                  let redirectUrl = params.get('r');
                     if (params.has('u')) {
                         redirectUrl = redirectUrl + params.get('u');
                     }
