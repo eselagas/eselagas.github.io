@@ -52,7 +52,7 @@
                         const _name = name.replace(/\uFF0F/g, '/');
                         const type = params.get('tpe');
                         let __type;
-                        if (tpe === '1') {__type = 'repo'} else {__type = 'file'}
+                        if (type === '1') {__type = 'repo'} else {__type = 'file'}
                         redirectUrl = `${file_location}?fileName=${_name}&path=${name}&user_id=${user_id}&viewType=${__type}&auth=1.247aBqWEAS3&i=true`;
                     break;
                 }
@@ -62,7 +62,7 @@
                     window.location.href = redirectUrl;
                 }
 
-                if (!params) {window.location.href = '/Clock'; document.getElementById('redirectNotice').innerHTML = 'Redirecting to Clock app...';}
+                if (params === null) {window.location.href = '/Clock'; document.getElementById('redirectNotice').innerHTML = 'Redirecting to Clock app...';}
             } else {
                 document.getElementById('errDisplay').style.display = 'block';
             }
