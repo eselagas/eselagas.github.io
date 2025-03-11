@@ -51,7 +51,7 @@
                 }
 
                 const githubData = await response.json();
-                const fileContent = atob(githubData.content);
+                const fileContent = new TextDecoder().decode(new Uint8Array([...atob(githubData.content)].map(char => char.charCodeAt(0))));
                 const fileData = JSON.parse(fileContent);
 
                 if (fileData.marker === 'EBF_UNENCRYPTED_V2') {
