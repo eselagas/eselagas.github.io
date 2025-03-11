@@ -85,7 +85,7 @@
 
         if (auth !== 'BETA6.429LqQwaSDCRet^%3@') {document.getElementById('content').innerHTML = 'Invalid authentication token!';}
         else {
-            if (token && userId) {
+            if (token && filePath) {
                 openFile(filePath, token);
             } else {
                 document.getElementById('content').innerHTML = 'No file provided.';
