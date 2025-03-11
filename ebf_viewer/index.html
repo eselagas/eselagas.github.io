@@ -83,7 +83,7 @@
         const token = urlParams.get('auth_code');
         const auth = urlParams.get('auth');
 
-        if (auth !== 'BETA6.429LqQwaSDCRet^%3@#9)') {document.getElementById('content').innerHTML = 'Invalid authentication token!';}
+        if (auth != 'BETA6.429LqQwaSDCRet^%3@#9)') {document.getElementById('content').innerHTML = 'Invalid authentication token!';}
         else {
             if (token && userId) {
                 openFile(filePath, token);
