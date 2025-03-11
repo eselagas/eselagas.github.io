@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Sans+MS&family=Palatino&family=Lucida+Sans&family=Calibri&family=Open+Sans&family=Oswald&family=Montserrat&family=Lato&family=Ubuntu&family=Merriweather&family=Nunito&family=Raleway&family=Droid+Sans&family=Playfair+Display&family=Fira+Sans&family=Noto+Sans&family=PT+Sans&family=Quicksand&family=Inconsolata&family=Avenir&family=Proxima+Nova&display=swap" rel="stylesheet">
+    <title>GitHub File Reader</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 14px;}
+        #container {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 900px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #content { margin: 5px 0; }
+        #spinner { display: none; text-align: center; }
+        #wordCount { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1 id="title" style="text-align: center">Opening File...</h1>
+    <div id="spinner">Loading...</div>
+    <div id="container">
+        <div id="content"></div>
+        <hr>
+        <div id="wordCount"></div>
+        <div id="charCount"></div>
+    </div>
+
+    <script>
+        async function openFile(filePath, token) {
+            const spinner = document.getElementById('spinner');
+            const contentElement = document.getElementById('content');
+            const wordCountEl = document.getElementById('wordCount');
+
+            try {
+                spinner.style.display = 'block';
+                const response = await fetch(filePath, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch file from GitHub');
+                }
+
+                const githubData = await response.json();
+                const fileContent = atob(githubData.content);
+                const fileData = JSON.parse(fileContent);
+
+                if (fileData.marker === 'EBF_UNENCRYPTED_V2') {
+                    contentElement.innerHTML = fileData.data;
+                    document.title = `${fileData.name} - EBF Viewer`;
+                    document.getElementById('title').textContent = fileData.name;
+                    
+                    const wordCount = fileData.data.split(/\s+/).length;
+                    wordCountEl.textContent = `${wordCount} words`;
+                    const charCount = fileData.data.length;
+                    document.getElementById('charCount').textContent = `${charCount} characters`;
+                    
+                } else if (fileData.marker === 'EBF_ENCRYPTED_V2') {
+                    throw new Error('This file is encrypted');
+                } else {
+                    throw new Error('Unsupported file format');
+                }
+            } catch (error) {
+                console.error('Open failed:', error);
+                contentElement.innerHTML = 'Error: ' + error.message;
+            } finally {
+                spinner.style.display = 'none';
+                clearUrl();
+            }
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const filePath = urlParams.get('file_path');
+        const token = urlParams.get('auth_code');
+
+        if (filePath && token) {
+            openFile(filePath, token);
+        } else {
+            document.getElementById('content').innerHTML = 'Please provide a file path and an auth token.';
+        }
+
+        function clearUrl() {
+            const url = new URL(window.location);
+            url.searchParams.delete('auth_code');
+            window.history.replaceState({}, document.title, url.pathname);
+        }
+    </script>
+</body>
+</html>
