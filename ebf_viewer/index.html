@@ -79,10 +79,13 @@
         }
 
         const urlParams = new URLSearchParams(window.location.search);
-        const filePath = urlParams.get('file_path');
+        const filePath = urlParams.get('file_pth');
         const token = urlParams.get('auth_code');
+        const auth = urlParams.get('auth');
 
-        if (filePath && token) {
+        if (auth !== 'BETA6.429LqQwaSDCRet^%3@#9)') {return;}
+
+        if (token && userId) {
             openFile(filePath, token);
         } else {
             document.getElementById('content').innerHTML = 'Please provide a file path and an auth token.';
