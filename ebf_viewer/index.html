@@ -55,7 +55,10 @@
                 const fileData = JSON.parse(fileContent);
 
                 if (fileData.marker === 'EBF_UNENCRYPTED_V2') {
-                    contentElement.innerHTML = fileData.data;
+                    const cleanContent = fileData.data
+            	        .replace(/<ink:.*>/, '')
+            	        .replace(/<picture:[^>]*>/g, '');
+            	    contentElement.innerHTML = cleanContent;
                     document.title = `${fileData.name} - EBF Viewer`;
                     document.getElementById('title').textContent = fileData.name;
                     
