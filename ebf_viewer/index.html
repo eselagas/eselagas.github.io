@@ -31,6 +31,17 @@
     </div>
 
     <script>
+        function parseFileContent(cont) {
+    	    try {
+    	        let content = JSON.parse(cont);
+    	        if (content.marker === FILE_MARKERS.UNENCRYPTED_V3 || content.marker === "FILE_MARKERS.UNENCRYPTED_V3") {
+    			    content.data = lightweightDecrypt(content.data);
+    			}
+    	        return content;
+    	    } catch (e) {
+    	        log("Error! " + e);
+            }
+    	}
         async function openFile(filePath, token) {
             const spinner = document.getElementById('spinner');
             const contentElement = document.getElementById('content');
@@ -51,26 +62,19 @@
                 }
 
                 const githubData = await response.json();
-                const fileContent = new TextDecoder().decode(new Uint8Array([...atob(githubData.content)].map(char => char.charCodeAt(0))));
-                const fileData = JSON.parse(fileContent);
-
-                if (fileData.marker === 'EBF_UNENCRYPTED_V2') {
-                    const cleanContent = fileData.data
-            	        .replace(/<ink:.*>/, '')
-            	        .replace(/<picture:[^>]*>/g, '');
-            	    contentElement.innerHTML = cleanContent;
+                const fileContent = decode(githubData.content);
+                const fileData = parseFileContent(fileContent);
+                    
+                if (fileData.marker === 'EBF_ENCRYPTED_V2') {
+                    throw new Error('This file is encrypted');
+                } else {
+                    contentElement.innerHTML = fileData.data;
                     document.title = `${fileData.name} - EBF Viewer`;
                     document.getElementById('title').textContent = fileData.name;
-                    
                     const wordCount = fileData.data.split(/\s+/).length;
                     wordCountEl.textContent = `${wordCount} words`;
                     const charCount = fileData.data.length;
                     document.getElementById('charCount').textContent = `${charCount} characters`;
-                    
-                } else if (fileData.marker === 'EBF_ENCRYPTED_V2') {
-                    throw new Error('This file is encrypted');
-                } else {
-                    throw new Error('Unsupported file format');
                 }
             } catch (error) {
                 console.error('Open failed:', error);
@@ -80,6 +84,21 @@
                 clearUrl();
             }
         }
+
+        async function decode(base64String, chunkSize = 1024) {
+    	  const binaryString = atob(base64String);
+    	  const length = binaryString.length;
+    	  const data = new Uint8Array(length);
+    
+    	  for (let i = 0; i < length; i += chunkSize) {
+    	    const end = Math.min(i + chunkSize, length);
+    	    for (let j = i; j < end; j++) {
+    	      data[j] = binaryString.charCodeAt(j);
+    	    }
+    	  }
+    
+    	  return new TextDecoder().decode(data);
+    	}
 
         const urlParams = new URLSearchParams(window.location.search);
         const filePath = urlParams.get('file_path');
