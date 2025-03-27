@@ -34,7 +34,7 @@
         function parseFileContent(cont) {
     	    try {
     	        let content = JSON.parse(cont);
-    	        if (content.marker === FILE_MARKERS.UNENCRYPTED_V3 || content.marker === "FILE_MARKERS.UNENCRYPTED_V3") {
+    	        if (content.marker === "EBF_UNENCRYPTED_V3" || content.marker === "FILE_MARKERS.UNENCRYPTED_V3") {
     			    content.data = lightweightDecrypt(content.data);
     			}
     	        return content;
