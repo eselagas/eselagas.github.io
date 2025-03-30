@@ -247,11 +247,12 @@
   	let githubToken;
  	let saveFolder = "DEV";
  	if (params.has("verify")) {
- 		saveFolder = params.get("folder");
- 		survey_loc = params.get("shml");
-    githubToken = params.get("access_token");
+ 	    saveFolder = params.get("folder");
+ 	    survey_loc = params.get("shml");
+	    githubToken = params.get("access_token");	
 	}
-	
+
+	document.addEventListener("DOMContentLoaded", function () {
 	fetch('./' + survey_loc)
 	  .then(response => {
 	    if (!response.ok) {
@@ -261,12 +262,7 @@
 	  })
 	  .then(data => {
 	    get('content').innerHTML = data;
-	  })
-	  .catch(error => {
-	    console.error('error:', error);
-	  });
 
-	document.addEventListener("DOMContentLoaded", function () {
 	  const form = document.querySelector("form");
 	  const progressBar = document.querySelector(".progress");
 
@@ -381,7 +377,11 @@
 	    }
 	    return response.json();
 	  }
-	});
+	  })
+	  .catch(error => {
+	    console.error('error:', error);
+	  });
+	 });
 
     function get(id){
     	return document.getElementById(id);
