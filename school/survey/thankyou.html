@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thank You!</title>
+  <style>
+  	:root {
+      --primary-color: #4a90e2;
+      --secondary-color: #50e3c2;
+    }
+    body {
+      background-color: #f4f7f8;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .thankyou-container {
+      background: #ffffff;
+      padding: 35px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .thankyou-container h1 {
+      font-size: 2.5em;
+      color: #4a90e2;
+      margin-top: 5px;
+    }
+    .thankyou-container p {
+      font-size: 1.1em;
+      margin-top: 10px;
+      color: #333;
+    }
+    button {
+      background: var(--primary-color);
+      color: #ffffff;
+      border: none;
+      padding: 15px 30px;
+      margin-top: 25px;
+      border-radius: 4px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 95%;
+    }
+
+    button:hover {
+      background: var(--secondary-color);
+    }
+  </style>
+</head>
+<body>
+  <div class="thankyou-container">
+    <h1>Thank You!</h1>
+    <p>Your survey response has been successfully submitted.</p>
+    <button onclick="window.location.href = 'index.html'" title="Submit another response">Submit another response</button>
+  </div>
+</body>
+</html>
