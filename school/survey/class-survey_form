@@ -41,7 +41,7 @@
   </div>
   
   <div class="question" data-type="Greatful for">
-    <label>What is one thing you're greatful for at Oxley?</label>
+    <label>What are some things you're greatful for at Oxley?</label>
     <div class="checkbox">
       <input type="checkbox" id="1" name="Greatful for" value="Friends" />
       <label for="1">Friends</label>
@@ -61,7 +61,7 @@
   </div>
 
   <div class="question" data-type="feedback">
-    <label for="q4">Is there anything you'de like to se <u>more</u> or <u>less</u> of? Do you have any feedback?</label>
+    <label for="q4">Is there anything you'de like to see <u>more</u> or <u>less</u> of? Do you have any feedback?</label>
     <textarea name="q4" placeholder="Write your answer here..."></textarea>
   </div>
   
