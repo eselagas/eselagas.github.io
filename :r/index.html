@@ -79,10 +79,25 @@
                         const auth_code = params.get('authentication');
                         redirectUrl = `https://eselagas.github.io/ebf_viewer?file_path=${file_path}&auth=BETA6.429LqQwaSDCRet^%3@&auth_code=${auth_code}`;
                     case 'survey':
-                        const token = atob(params.get("t"));
-                        const saveFolder = params.get("sfolder");
-                        const survey_location = params.get("sloc");
-                        redirectUrl = `https://eselagas.github.io/school/survey?verify=true&folder=${saveFolder}&shml=${survey_location}&access_token=${token}`;
+                        case 'survey':
+                            if (params.has("t") && /^[A-Za-z0-9+/=]+$/.test(params.get("t"))) {
+                                const token = atob(params.get("t"));
+                                const saveFolder = params.get("sfolder");
+                                const survey_location = params.get("sloc");
+                        
+                                if (saveFolder && survey_location) {
+                                    redirectUrl = `https://eselagas.github.io/school/survey?verify=true&folder=${saveFolder}&shml=${survey_location}&access_token=${token}`;
+                                } else {
+                                    console.error("Missing survey parameters");
+                                    info.innerHTML = "Invalid or missing survey details. Please try again.";
+                                    return;
+                                }
+                            } else {
+                                console.error("Invalid token parameter");
+                                info.innerHTML = "Invalid token. Please try again.";
+                                return;
+                            }
+                            break;
                 }
 
                 if (redirectUrl) {
