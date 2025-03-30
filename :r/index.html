@@ -15,6 +15,25 @@
             const params = new URLSearchParams(window.location.search);
             let redirectUrl;
 
+            if(getCookieValue('redirect-url')) window.location.href = getCookieValue('redirect-url');
+
+            function getCookieValue(cookieName) {
+              const cookies = document.cookie.split('; ');
+              const cookie = cookies.find(cookie => cookie.startsWith(cookieName + '='));
+              return cookie ? cookie.split('=')[1] : null;
+            }
+
+            function setCookie(cookieName, value, days) {
+              const date = new Date();
+              date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+              const expires = "expires=" + date.toUTCString();
+              document.cookie = `${cookieName}=${value}; ${expires}; path=/`;
+            }
+
+            const visits = parseInt(getCookieValue('web_visits')) || 0;
+            const newVisits = visits + 1;
+            setCookie('web_visits', newVisits, 365);
+
             if (params.has('r_type')) {
                 const redType = params.get('r_type');
                 switch (redType) {
@@ -59,10 +78,16 @@
                         const file_path = "https://api.github.com/repos/eselagas/app.files/contents/" + params.get('file_pth');
                         const auth_code = params.get('authentication');
                         redirectUrl = `https://eselagas.github.io/ebf_viewer?file_path=${file_path}&auth=BETA6.429LqQwaSDCRet^%3@&auth_code=${auth_code}`;
+                    case 'survey':
+                        const token = atob(params.get("t"));
+                        const saveFolder = params.get("sfolder");
+                        const survey_location = params.get("sloc");
+                        redirectUrl = `https://eselagas.github.io/school/survey?verify=true&folder=${saveFolder}&shml=${survey_location}&access_token=${token}
                 }
 
                 if (redirectUrl) {
                     info.innerHTML = `If you are not redirected automatically, <a href="${redirectUrl}">click here</a>.`;
+                    setCookie("redirect-url", redirectUrl, 1);
                     window.location.href = redirectUrl;
                 }
 
