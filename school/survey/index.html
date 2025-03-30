@@ -242,16 +242,16 @@
 
  <script>
  	const params = new URLSearchParams(window.location.search);
- 	let survey-loc;
-  let githubToken;
+ 	let survey_loc;
+  	let githubToken;
  	let saveFolder = "DEV";
  	if (params.has("verify")) {
  		saveFolder = params.get("folder");
- 		survey-loc = params.get("shml");
+ 		survey_loc = params.get("shml");
     githubToken = params.get("access_token");
 	}
 	
-	fetch('./' + survey-loc)
+	fetch('./' + survey_loc)
 	  .then(response => {
 	    if (!response.ok) {
 	      throw new Error('Network response was not ok');
