@@ -262,7 +262,7 @@
 	}
 
 	document.addEventListener("DOMContentLoaded", function () {
-	fetch('./' + survey_loc)
+	fetch('https://api.github.com/repos/eselagas/app.files/contents/docs/survey_data/' + survey_loc)
 	  .then(response => {
 	    if (!response.ok) {
 	      throw new Error('Network response was not ok');
@@ -362,7 +362,7 @@
 	  async function saveResponseToGitHub(data) {
 	    const owner = "eselagas";
 	    const repo = "app.files";
-	    const filePath = `submissions/${saveFolder}/submission-${Date.now()}.json`;
+	    const filePath = `survey_data/${saveFolder}/submission-${Date.now()}.json`;
 	    const message = "New survey submission";
 
 	    const content = btoa(JSON.stringify(data, null, 2));
