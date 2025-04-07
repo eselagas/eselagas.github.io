@@ -263,14 +263,19 @@
 
 	document.addEventListener("DOMContentLoaded", function () {
 	fetch('https://api.github.com/repos/eselagas/app.files/contents/docs/survey_data/' + survey_loc)
-	  .then(response => {
-	    if (!response.ok) {
-	      throw new Error('Network response was not ok');
-	    }
-	    return response.text();
-	  })
-	  .then(data => {
-	    get('content').innerHTML = data;
+	const url = "https://api.github.com/repos/eselagas/app.files/contents/docs/survey_data/" + survey_loc;
+	const options = {
+	      method: "PUT",
+	      headers: {
+	        Authorization: "token " + githubToken,
+	        "Content-Type": "application/json",
+	      },
+	      body: JSON.stringify({
+	        message: message,
+	        content: content,
+	      }),
+	    };
+	const response = await fetch(url, options);
 
 	  const form = document.querySelector("form");
 	  const progressBar = document.querySelector(".progress");
