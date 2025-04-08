@@ -272,8 +272,9 @@
 	};
 		
 	const response = await fetch(url, options);
-	const text = await response.text();
-	document.getElementById("content").innerHTML = text;
+	const data = await response.json();
+	const decodedContent = atob(data.content);
+	get("content").innerHTML = decodedContent;
 
 	  const form = document.querySelector("form");
 	  const progressBar = document.querySelector(".progress");
@@ -360,6 +361,7 @@
 	      console.error("Error submitting survey:", error);
 	      alert("There was an error submitting your survey. Please try again.");
 	    }
+	  });
 	  });
 
 	 async function saveResponseToGitHub(data, retries = 3) {
