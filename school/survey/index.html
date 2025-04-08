@@ -362,38 +362,47 @@
 	    }
 	  });
 
-	  async function saveResponseToGitHub(data) {
-	    const owner = "eselagas";
-	    const repo = "app.files";
-	    const filePath = `survey_data/${saveFolder}/submission-${Date.now()}.json`;
-	    const message = "New survey submission";
-
-	    const content = btoa(JSON.stringify(data, null, 2));
+	 async function saveResponseToGitHub(data, retries = 3) {
+	  const owner = "eselagas";
+	  const repo = "app.files";
+	  const filePath = `survey_data/${saveFolder}/submission-${new Date().toISOString()}.json`;
+	  const message = "New survey submission";
+	
+	  try {
+	    if (typeof data !== "object" || Array.isArray(data)) {
+	      throw new Error("Invalid data format. Expected a JSON object.");
+	    }
+	
+	    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
 	    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
-
 	    const options = {
 	      method: "PUT",
 	      headers: {
 	        Authorization: "token " + githubToken,
 	        "Content-Type": "application/json",
 	      },
-	      body: JSON.stringify({
-	        message: message,
-	        content: content,
-	      }),
+	      body: JSON.stringify({ message, content }),
 	    };
-
+	
 	    const response = await fetch(url, options);
 	    if (!response.ok) {
-	      throw new Error("Failed to save file: " + response.statusText);
+	      if (response.status === 403 && response.headers.get("X-RateLimit-Remaining") === "0") {
+	        throw new Error("Rate limit exceeded. Please wait before retrying.");
+	      }
+	      const errorDetails = await response.json();
+	      throw new Error(`Failed to save file: ${response.status} - ${errorDetails.message}`);
 	    }
-	    return response.json();
+	
+	    return await response.json();
+	  } catch (error) {
+	    if (retries > 0) {
+	      console.warn("Retrying...", retries, "attempts remaining.");
+	      return await saveResponseToGitHub(data, retries - 1);
+	    } else {
+	      throw new Error("Max retry attempts reached. " + error.message);
+	    }
 	  }
-	  })
-	  .catch(error => {
-	    console.error('error:', error);
-	  });
-	 });
+	}
 
     function get(id){
     	return document.getElementById(id);
