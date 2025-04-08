@@ -286,7 +286,7 @@
 
 	const webIcon = document.getElementById("webIcon");
         const web_icon = document.getElementById("web_logo");
-	const web_title = document.getElementById("survey_title");
+	const web_title = document.getElementById("survey_title").textContent;
 	if (web_title) {document.title = web_title + " - Survey";}
 
         if (web_icon.src) {
