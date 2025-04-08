@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Survey</title>
-  <link rel="icon" href="https://www.svgrepo.com/show/451366/survey.svg">
+  <link id="webIcon" rel="icon" href="https://www.svgrepo.com/show/451366/survey.svg">
   <style>
     :root {
       --primary-color: #4a90e2;
@@ -283,6 +283,14 @@
 	const data = await response.json();
 	const decodedContent = atob(data.content);
 	get("content").innerHTML = decodedContent;
+
+	const webIcon = document.getElementById("webIcon");
+        const web_icon = document.getElementById("web_icon");
+
+        if (web_icon && web_icon.href) {
+            webIcon.href = web_icon.href;
+            web_icon.remove();
+        }
 
 	  const form = document.querySelector("form");
 	  const progressBar = document.querySelector(".progress");
