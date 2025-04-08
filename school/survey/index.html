@@ -100,10 +100,10 @@
       margin-bottom: 10px;
     }
 
-    form input[type="text"],
-    form input[type="email"],
-    form textarea,
-    form select:hover {
+    form input[type="text"]:focus,
+    form input[type="email"]:focus,
+    form textarea:focus,
+    form select:focus {
       outline: 1px solid black;
     }
     
@@ -286,8 +286,10 @@
 
 	const webIcon = document.getElementById("webIcon");
         const web_icon = document.getElementById("web_logo");
+	const web_title = document.getElementById("survey_title");
+	if (web_title) {document.title = web_title + " - Survey";}
 
-        if (web_icon && web_icon.src) {
+        if (web_icon.src) {
             webIcon.href = web_icon.src;
         }
 
