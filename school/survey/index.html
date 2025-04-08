@@ -285,11 +285,10 @@
 	get("content").innerHTML = decodedContent;
 
 	const webIcon = document.getElementById("webIcon");
-        const web_icon = document.getElementById("web_icon");
+        const web_icon = document.getElementById("web_logo");
 
-        if (web_icon && web_icon.href) {
-            webIcon.href = web_icon.href;
-            web_icon.remove();
+        if (web_icon && web_icon.src) {
+            webIcon.href = web_icon.src;
         }
 
 	  const form = document.querySelector("form");
