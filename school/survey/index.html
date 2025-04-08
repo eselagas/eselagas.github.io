@@ -98,6 +98,13 @@
       font-size: 1em;
       margin-bottom: 10px;
     }
+
+    form input[type="text"],
+    form input[type="email"],
+    form textarea,
+    form select:hover {
+      outline: 1px solid black;
+    }
     
     form input[type="checkbox"], 
     form input[type="radio"] {
@@ -372,7 +379,7 @@
 	
 	  try {
 	    if (typeof data !== "object" || Array.isArray(data)) {
-	      throw new Error("Invalid data format. Expected a JSON object.");
+	      throw new Error("Invalid data format. Expected JSON object.");
 	    }
 	
 	    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
@@ -406,9 +413,9 @@
 	  }
 	}
 
-    function get(id){
-    	return document.getElementById(id);
-    }
+       function get(id){
+    	 return document.getElementById(id);
+       }
 
 	 function setCookie(name, value, hours) {
 	  const now = new Date();
