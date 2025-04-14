@@ -222,6 +222,24 @@
         margin: 25px;
     }
 
+    .text-label::before {
+		margin-bottom: 10px;
+    }
+
+	  .text-label::after {
+		margin-top: 10px;
+	  }
+
+	  .text-label::before,
+	  .text-label::after {
+		content: '';
+	    display: block;
+	    height: 1px;
+	    width: 100%;
+	    background-color: gray;
+	    margin: 10px 0;
+	  }
+
     form button {
       background: var(--primary-color);
       color: #ffffff;
