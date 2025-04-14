@@ -24,7 +24,7 @@
 	}
 	
 	.container {
-	  max-width: 750px;
+	  max-width: 850px;
 	  margin: 40px auto;
 	  background: var(--card-bg);
 	  border-radius: 8px;
@@ -45,23 +45,10 @@
 	  outline: 2px solid var(--focus-color);
 	}
 	
-	.text-label {
-	  text-align: center;
-	  margin: 25px auto;
-	}
-	
-	.text-label::before,
-	.text-label::after {
-	  content: '';
-	  display: block;
-	  height: 2px;
-	  width: 50%;
-	  background-color: var(--primary-color);
-	  margin: 10px auto;
-	}
-	
 	form button {
 	  background: var(--primary-color);
+	  text-align: center;
+	  width: 100%;
 	  color: #ffffff;
 	  border: none;
 	  padding: 12px 24px;
@@ -251,9 +238,19 @@
     .question div {display: flex;}
 
     .text-label {
-	text-align: center;
-        margin: 25px;
-    }
+	  text-align: center;
+	  margin: 25px auto;
+	}
+	
+	.text-label::before,
+	.text-label::after {
+	  content: '';
+	  display: block;
+	  height: 2px;
+	  width: 50%;
+	  background-color: var(--primary-color);
+	  margin: 10px auto;
+	}
 
     .text-label::before {
 		margin-bottom: 10px;
@@ -261,6 +258,10 @@
 
   .text-label::after {
 	margin-top: 10px;
+  }
+
+  .text-label label {
+	margin: 0;
   }
 
     @media (max-width: 600px) {
