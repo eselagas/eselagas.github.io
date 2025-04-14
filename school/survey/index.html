@@ -7,33 +7,78 @@
   <link id="webIcon" rel="icon" href="https://www.svgrepo.com/show/451366/survey.svg">
   <style>
     :root {
-      --primary-color: #4a90e2;
-      --secondary-color: #50e3c2;
-      --bg-color: #f4f7f8;
-      --text-color: #333;
-      --card-bg: #ffffff;
-    }
-
+	  --primary-color: #3366cc;
+	  --secondary-color: #33cc99;
+	  --bg-color: #f9fafb;
+	  --text-color: #222;
+	  --card-bg: #ffffff;
+	  --focus-color: #ffcc00;
+	}
+	
+	body {
+	  background: var(--bg-color);
+	  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	  color: var(--text-color);
+	  padding: 20px;
+	  line-height: 1.6;
+	}
+	
+	.container {
+	  max-width: 750px;
+	  margin: 40px auto;
+	  background: var(--card-bg);
+	  border-radius: 8px;
+	  padding: 30px;
+	  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	}
+	
+	header h1 {
+	  font-size: 2.5em;
+	  color: var(--primary-color);
+	  margin-bottom: 10px;
+	}
+	
+	form input[type="text"]:focus,
+	form input[type="email"]:focus,
+	form textarea:focus,
+	form select:focus {
+	  outline: 2px solid var(--focus-color);
+	}
+	
+	.text-label {
+	  text-align: center;
+	  margin: 25px auto;
+	}
+	
+	.text-label::before,
+	.text-label::after {
+	  content: '';
+	  display: block;
+	  height: 2px;
+	  width: 50%;
+	  background-color: var(--primary-color);
+	  margin: 10px auto;
+	}
+	
+	form button {
+	  background: var(--primary-color);
+	  color: #ffffff;
+	  border: none;
+	  padding: 12px 24px;
+	  border-radius: 6px;
+	  font-size: 1.1em;
+	  cursor: pointer;
+	  transition: background 0.3s ease;
+	}
+	
+	form button:hover {
+	  background: var(--secondary-color);
+	}
+		  
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-    }
-
-    body {
-      background: var(--bg-color);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      color: var(--text-color);
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 750px;
-      margin: 40px auto;
-      background: var(--card-bg);
-      border-radius: 8px;
-      padding: 30px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
 
     header {
@@ -44,11 +89,6 @@
     header img {
       display: block;
       margin: 0 auto 10px;
-    }
-
-    header h1 {
-      font-size: 2.5em;
-      color: var(--primary-color);
     }
 
     .progress-bar {
@@ -98,13 +138,6 @@
       border-radius: 4px;
       font-size: 1em;
       margin-bottom: 10px;
-    }
-
-    form input[type="text"]:focus,
-    form input[type="email"]:focus,
-    form textarea:focus,
-    form select:focus {
-      outline: 1px solid black;
     }
     
     form input[type="checkbox"], 
@@ -226,45 +259,21 @@
 		margin-bottom: 10px;
     }
 
-	  .text-label::after {
-		margin-top: 10px;
-	  }
-
-	  .text-label::before,
-	  .text-label::after {
-		content: '';
-	    display: block;
-	    height: 1px;
-	    width: 100%;
-	    background-color: gray;
-	    margin: 10px 0;
-	  }
-
-    form button {
-      background: var(--primary-color);
-      color: #ffffff;
-      border: none;
-      padding: 15px 30px;
-      border-radius: 4px;
-      font-size: 1em;
-      cursor: pointer;
-      transition: background 0.3s;
-      display: block;
-      width: 100%;
-    }
-
-    form button:hover {
-      background: var(--secondary-color);
-    }
+  .text-label::after {
+	margin-top: 10px;
+  }
 
     @media (max-width: 600px) {
-      header h1 {
-        font-size: 2em;
-      }
-      form button {
-        padding: 12px 20px;
-      }
-    }
+	  body {
+	    padding: 10px;
+	  }
+	  header h1 {
+	    font-size: 2em;
+	  }
+	  .container {
+	    padding: 20px;
+	  }
+	}
   </style>
 </head>
 <body>
