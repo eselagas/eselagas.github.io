@@ -36,6 +36,8 @@
 
             if (params.has('r_type')) {
                 const redType = params.get('r_type');
+                let redirectUrl;
+            
                 switch (redType) {
                     case 'git_file':
                         const repo = params.get('repo');
@@ -44,11 +46,11 @@
                             redirectUrl = `https://raw.githubusercontent.com/eselagas/${repo}/refs/heads/main/${path}`;
                         }
                         break;
-
+            
                     case 'redirect':
                         redirectUrl = params.get('r');
                         break;
-
+            
                     case 'download':
                         const redirect = params.get('r');
                         const dName = params.get('name');
@@ -64,48 +66,57 @@
                             return;
                         }
                         break;
+            
                     case 'ebf_file':
-                        const file_location = params.get('loc'); /*temporary*/
+                        const file_location = params.get('loc');
                         const user_id = params.get('id');
                         const name = params.get('fpth');
                         const _name = name.replace(/\uFF0F/g, '/');
                         const type = params.get('tpe');
-                        let __type;
-                        if (type === '1') {__type = 'repo'} else {__type = 'file'}
+                        let __type = type === '1' ? 'repo' : 'file';
                         redirectUrl = `${file_location}?fileName=${_name}&path=${name}&user_id=${user_id}&viewType=${__type}&auth=1.247aBqWEAS3&i=true`;
-                    break;    
+                        break;
+            
                     case 'ebf_file-send':
-                        const file_path = "https://api.github.com/repos/eselagas/app.files/contents/" + params.get('file_pth');
+                        const file_path = `https://api.github.com/repos/eselagas/app.files/contents/${params.get('file_pth')}`;
                         const auth_code = params.get('authentication');
                         redirectUrl = `https://eselagas.github.io/ebf_viewer?file_path=${file_path}&auth=BETA6.429LqQwaSDCRet^%3@&auth_code=${auth_code}`;
+                        break;
+            
                     case 'survey':
-                            if (params.has("t") && /^[A-Za-z0-9+/=]+$/.test(params.get("t"))) {
+                        if (params.has("t") && /^[A-Za-z0-9+/=]+$/.test(params.get("t"))) {
+                            try {
                                 const token = atob(params.get("t"));
                                 const saveFolder = params.get("sfolder");
                                 const survey_location = params.get("sloc");
-                        
+            
                                 if (saveFolder && survey_location) {
                                     redirectUrl = `https://eselagas.github.io/school/survey?verify=true&folder=${saveFolder}&shml=${survey_location}&access_token=${token}`;
                                 } else {
-                                    console.error("Missing survey parameters");
                                     info.innerHTML = "Invalid or missing survey details. Please try again.";
                                     return;
                                 }
-                            } else {
-                                console.error("Invalid token parameter");
+                            } catch (error) {
                                 info.innerHTML = "Invalid token. Please try again.";
                                 return;
                             }
-                            break;
+                        } else {
+                            info.innerHTML = "Invalid token. Please try again.";
+                            return;
+                        }
+                        break;
                 }
-
+            
                 if (redirectUrl) {
                     info.innerHTML = `If you are not redirected automatically, <a href="${redirectUrl}">click here</a>.`;
                     setCookie("redirect-url", redirectUrl, 1);
                     window.location.href = redirectUrl;
                 }
-
-                if (params === null) {window.location.href = '/Clock'; document.getElementById('redirectNotice').innerHTML = 'Redirecting to Clock app...';}
+            
+                if (!params.toString()) {
+                    window.location.href = '/Clock';
+                    document.getElementById('redirectNotice').innerHTML = 'Redirecting to Clock app...';
+                }
             } else {
                 document.getElementById('errDisplay').style.display = 'block';
             }
