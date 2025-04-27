@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>It's Not You, It's Us</title>
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --accent-color: #ec4899;
+            --bg-color: #f9fafb;
+            --text-color: #1f2937;
+            --card-bg: #ffffff;
+            --secondary-text: #6b7280;
+            --shadow: rgba(0, 0, 0, 0.08);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary-color: #818cf8;
+                --accent-color: #f472b6;
+                --bg-color: #111827;
+                --text-color: #f9fafb;
+                --card-bg: #1f2937;
+                --secondary-text: #9ca3af;
+                --shadow: rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            width: 100vw;
+            transition: all 0.3s ease;
+        }
+
+        .error-container {
+            max-width: 450px;
+            width: 90%;
+            padding: 40px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px var(--shadow);
+            animation: float-up 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center;
+        }
+
+        .illustration {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            fill: var(--accent-color);
+            animation: gentle-swing 3s ease-in-out infinite;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .message {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+
+        .technical-details {
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 18px 0;
+            font-family: monospace;
+            font-size: 14px;
+            color: var(--secondary-text);
+            text-align: left;
+            max-height: 100px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #redirect {
+            display: inline-block;
+            padding: 12px 24px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            background-size: 200% 200%;
+            color: white;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.2);
+            animation: gradientFlow 4s infinite linear;
+        }
+
+        #redirect:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        #redirect:active {
+            transform: translateY(0);
+        }
+
+        #err {
+            font-size: 14px;
+            color: var(--secondary-text);
+            margin-top: 24px;
+        }
+
+        .show-technical {
+            background: none;
+            border: none;
+            font-size: 14px;
+            color: var(--primary-color);
+            cursor: pointer;
+            text-decoration: underline dashed;
+            margin-top: 10px;
+            padding: 0;
+        }
+
+        .show-technical:hover {
+            text-decoration: underline solid;
+        }
+
+        @keyframes float-up {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes gentle-swing {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="error-container">        
+        <svg class="illustration" viewBox="0 0 24 24">
+            <path d="M20.42 4.58A5.4 5.4 0 0 0 16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3a5.4 5.4 0 0 0-3.92 1.58A5.37 5.37 0 0 0 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5a5.37 5.37 0 0 0-1.58-3.92zM12.1 18.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"/>
+        </svg>
+        
+        <h1>It's not you, it's us!</h1>
+        <p class="message">We are experiencing technical difficulties right now.<br>We're working hard to resolve the problem.<br>Thanks for your patience!</p>
+        
+        <div id="technicalDetails" class="technical-details">Loading error details...</div>
+        
+        <button id="showTechnical" class="show-technical" title="Click to view details">Show technical details</button>
+        
+        <div>
+            <a id="redirect" href="https://eselagas.github.io/Clock">Go Back</a>
+        </div>
+        
+        <div id="err"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const p = new URLSearchParams(location.search),
+                rUrl = p.get("link") || "https://eselagas.github.io/Clock",
+                eId = p.get("errCode") || genErrId(),
+            eDet = p.get("errDetails");
+
+            clearParams();
+
+            document.getElementById("redirect").href = rUrl;
+            document.getElementById("err").textContent = `Error Code: ${eId}`;
+            document.getElementById("technicalDetails").textContent = eDet || "No specific error details available.";
+
+            const tDet = document.getElementById("technicalDetails"),
+                tBtn = document.getElementById("showTechnical");
+
+            tBtn.addEventListener("click", () => {
+                tDet.style.display = tDet.style.display === "block" ? "none" : "block";
+                tBtn.textContent = tDet.style.display === "block" ? "Hide technical details" : "Show technical details";
+            });
+
+            if (eDet) {
+                tDet.style.display = "block";
+                tBtn.textContent = "Hide technical details";
+            }
+
+            function genErrId() {
+                return `${Date.now().toString(36).slice(0,5)}-${Math.random().toString(36).slice(2,7)}`;
+            }
+
+            function clearParams() {
+                const url = new URL(window.location);
+                url.search = "";
+                window.history.replaceState(null, "", url.toString());
+            }
+        });
+    </script>
+
+</body>
+</html>
