@@ -31,6 +31,46 @@
     </div>
 
     <script>
+        function lightweightDecrypt(encryptedData) {
+    	    const pseudoKey = 42;
+    	    const decodedData = encryptedData.map(byte => byte ^ pseudoKey);
+    	    return new TextDecoder().decode(new Uint8Array(decodedData));
+    	}
+        async function decryptContent(encryptedData, password) {
+    	    const encoder = new TextEncoder();
+    	    const passwordKey = await crypto.subtle.importKey(
+    	        'raw',
+    	        encoder.encode(password),
+    	        { name: 'PBKDF2' },
+    	        false,
+    	        ['deriveBits', 'deriveKey']
+    	    );
+    	    
+    	    const key = await crypto.subtle.deriveKey(
+    	        {
+    	            name: 'PBKDF2',
+    	            salt: new Uint8Array(encryptedData.salt),
+    	            iterations: 100000,
+    	            hash: 'SHA-256'
+    	        },
+    	        passwordKey,
+    	        { name: 'AES-GCM', length: 256 },
+    	        false,
+    	        ['decrypt']
+    	    );
+    	    
+    	    try {
+    	        const decrypted = await crypto.subtle.decrypt(
+    	            { name: 'AES-GCM', iv: new Uint8Array(encryptedData.iv) },
+    	            key,
+    	            new Uint8Array(encryptedData.encrypted)
+    	        );
+    	        
+    	        return new TextDecoder().decode(decrypted);
+    	    } catch (error) {
+    	        throw new Error('Invalid password');
+    	    }
+    	}
         function parseFileContent(cont) {
     	    try {
     	        let content = JSON.parse(cont);
@@ -63,10 +103,11 @@
 
                 const githubData = await response.json();
                 const fileContent = decode(githubData.content);
-                const fileData = parseFileContent(fileContent);
+                let fileData = parseFileContent(fileContent);
                     
                 if (fileData.marker === 'EBF_ENCRYPTED_V2') {
-                    throw new Error('This file is encrypted');
+                    const password = prompt('Enter file password:');
+                    fileData = await decryptContent(fileData, password);
                 } else {
                     contentElement.innerHTML = fileData.data;
                     document.title = `${fileData.name} - EBF Viewer`;
