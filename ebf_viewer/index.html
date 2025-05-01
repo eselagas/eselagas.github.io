@@ -7,57 +7,86 @@
     <title>GitHub File Reader</title>
 <style>
     body { 
-        font-family: Arial, sans-serif; 
+        font-family: 'Nunito', sans-serif; 
         font-size: 14px; 
-        background: linear-gradient(135deg, #f8f8f8, #e0e0e0);
+        background: linear-gradient(135deg, #f2f2f2, #d9d9d9);
         margin: 0;
         padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
     }
 
-    #container {
-        background-color: rgba(255, 255, 255, 0.9); 
-        border-radius: 12px;
-        padding: 20px;
-        margin: 20px auto;
-        max-width: 900px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    #document-container {
+        background-color: white;
+        width: 210mm;
+        height: 297mm;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        border-radius: 6px;
         transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
     }
 
-    #container:hover {
-        transform: scale(1.02);
-        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+    #document-container:hover {
+        transform: scale(1.01);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    #title {
+        font-size: 26px;
+        font-family: 'Playfair Display', serif;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 15px;
     }
 
     #content { 
-        margin: 10px 0 25px; 
         line-height: 1.6;
-    }
-
-    #spinner { 
-        display: none; 
-        text-align: center; 
         font-size: 16px;
-        color: #555;
-        animation: fadeIn 0.5s ease-in-out;
+        margin-top: 10px;
     }
 
-    #wordCount { 
-        margin: 12px 0; 
-        font-weight: bold; 
+    #wordCount, #charCount {
+        font-weight: bold;
         color: #333;
+        margin-top: 15px;
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+    #fullscreenBtn {
+        display: block;
+        margin: 15px auto;
+        padding: 8px 15px;
+        background: #333;
+        color: white;
+        font-size: 14px;
+        border: none;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background 0.2s ease-in-out;
+    }
+
+    #fullscreenBtn:hover {
+        background: #555;
+    }
+
+    .fullscreen-mode {
+        background: white;
+        color: black;
+        width: 100%;
+        height: 100vh;
+        padding: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 </style>
 </head>
 <body>
-    <h1 id="title" style="text-align: center">Opening File...</h1>
-    <div id="spinner">Loading...</div>
-    <div id="container">
+    <div id="document-container">
+        <h1 id="title">Opening File...</h1>
+        <button id="fullscreenBtn" onclick="toggleFullscreen()">Fullscreen</button>
+        <div id="spinner">Loading...</div>
         <div id="content"></div>
         <hr>
         <div id="wordCount"></div>
@@ -65,6 +94,28 @@
     </div>
 
     <script>
+        function updateFontElements() {
+            const fontElements = document.querySelectorAll('font[face]');
+            fontElements.forEach(fontEl => {
+                const fontFamily = fontEl.getAttribute('face');
+                if (fontFamily) {
+                    fontEl.style.fontFamily = fontFamily;
+                    fontEl.removeAttribute('face');
+                }
+            });
+        }
+
+        function toggleFullscreen() {
+            const docContainer = document.getElementById('document-container');
+            if (!document.fullscreenElement) {
+                docContainer.classList.add('fullscreen-mode');
+                docContainer.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+                docContainer.classList.remove('fullscreen-mode');
+            }
+        }
+        
         function lightweightDecrypt(encryptedData) {
             const pseudoKey = 42;
             const decodedData = encryptedData.map(byte => byte ^ pseudoKey);
@@ -227,6 +278,8 @@
             
             const charCount = contentStr.length;
             charCountEl.textContent = `${charCount} characters`;
+
+            updateFontElements();
         }
 
         function decode(base64String) {
@@ -277,6 +330,7 @@
         function clearUrl() {
             const url = new URL(window.location);
             url.searchParams.delete('auth_code');
+            url.searchParams.delete('auth');
             window.history.replaceState({}, document.title, url.pathname + (url.search !== '?' ? url.search : ''));
         }
     </script>
