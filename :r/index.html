@@ -114,12 +114,12 @@
                 }
             
                 if (!params.toString()) {
-                    window.location.href = '/error?errCode=ERR_INVALID_PARAMETERS&errDetails=ERROR: Could not convert URL query parameters to valid string&link=/';
+                    window.location.href = '/:r/error?errCode=ERR_INVALID_PARAMETERS&errDetails=ERROR: Could not convert URL query parameters to valid string&link=/';
                     document.getElementById('redirectNotice').innerHTML = 'Redirecting - Error';
                 }
             } else {
                 document.getElementById('errDisplay').style.display = 'block';
-                window.location.href = '/error?errCode=ERR_MISSING_VAL&errDetails=ERROR: r_type parameter value not provided / invalid&link=/';
+                window.location.href = '/:r/error?errCode=ERR_MISSING_VAL&errDetails=ERROR: r_type parameter value not provided / invalid&link=/';
             }
         });
     </script>
