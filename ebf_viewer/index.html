@@ -5,20 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Comic+Sans+MS&family=Palatino&family=Lucida+Sans&family=Calibri&family=Open+Sans&family=Oswald&family=Montserrat&family=Lato&family=Ubuntu&family=Merriweather&family=Nunito&family=Raleway&family=Droid+Sans&family=Playfair+Display&family=Fira+Sans&family=Noto+Sans&family=PT+Sans&family=Quicksand&family=Inconsolata&family=Avenir&family=Proxima+Nova&display=swap" rel="stylesheet">
     <title>GitHub File Reader</title>
-    <style>
-        body { font-family: Arial, sans-serif; font-size: 14px;}
-        #container {
-            background-color: rgba(255, 255, 255, 0.8);
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px auto;
-            max-width: 900px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        #content { margin-top: 5px; margin-bottom: 25px; }
-        #spinner { display: none; text-align: center; }
-        #wordCount { margin: 10px 0; }
-    </style>
+<style>
+    body { 
+        font-family: Arial, sans-serif; 
+        font-size: 14px; 
+        background: linear-gradient(135deg, #f8f8f8, #e0e0e0);
+        margin: 0;
+        padding: 0;
+    }
+
+    #container {
+        background-color: rgba(255, 255, 255, 0.9); 
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px auto;
+        max-width: 900px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    }
+
+    #container:hover {
+        transform: scale(1.02);
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    #content { 
+        margin: 10px 0 25px; 
+        line-height: 1.6;
+    }
+
+    #spinner { 
+        display: none; 
+        text-align: center; 
+        font-size: 16px;
+        color: #555;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    #wordCount { 
+        margin: 12px 0; 
+        font-weight: bold; 
+        color: #333;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
 </head>
 <body>
     <h1 id="title" style="text-align: center">Opening File...</h1>
@@ -32,90 +66,132 @@
 
     <script>
         function lightweightDecrypt(encryptedData) {
-    	    const pseudoKey = 42;
-    	    const decodedData = encryptedData.map(byte => byte ^ pseudoKey);
-    	    return new TextDecoder().decode(new Uint8Array(decodedData));
-    	}
+            const pseudoKey = 42;
+            const decodedData = encryptedData.map(byte => byte ^ pseudoKey);
+            return new TextDecoder().decode(new Uint8Array(decodedData));
+        }
+
         async function decryptContent(encryptedData, password) {
-    	    const encoder = new TextEncoder();
-    	    const passwordKey = await crypto.subtle.importKey(
-    	        'raw',
-    	        encoder.encode(password),
-    	        { name: 'PBKDF2' },
-    	        false,
-    	        ['deriveBits', 'deriveKey']
-    	    );
-    	    
-    	    const key = await crypto.subtle.deriveKey(
-    	        {
-    	            name: 'PBKDF2',
-    	            salt: new Uint8Array(encryptedData.salt),
-    	            iterations: 100000,
-    	            hash: 'SHA-256'
-    	        },
-    	        passwordKey,
-    	        { name: 'AES-GCM', length: 256 },
-    	        false,
-    	        ['decrypt']
-    	    );
-    	    
-    	    try {
-    	        const decrypted = await crypto.subtle.decrypt(
-    	            { name: 'AES-GCM', iv: new Uint8Array(encryptedData.iv) },
-    	            key,
-    	            new Uint8Array(encryptedData.encrypted)
-    	        );
-    	        
-    	        return new TextDecoder().decode(decrypted);
-    	    } catch (error) {
-    	        throw new Error('Invalid password');
-    	    }
-    	}
-        function parseFileContent(cont) {
-    	    try {
-    	        let content = JSON.parse(cont);
-    	        if (content.marker === "EBF_UNENCRYPTED_V3" || content.marker === "FILE_MARKERS.UNENCRYPTED_V3") {
-    			    content.data = lightweightDecrypt(content.data);
-    			}
-    	        return content;
-    	    } catch (e) {
-    	        console.error("Error! " + e);
+            if (!encryptedData.salt || !encryptedData.iv || !encryptedData.encrypted) {
+                throw new Error('File is missing required encryption fields (salt, iv, or encrypted data)');
             }
-    	}
+            
+            const encoder = new TextEncoder();
+            const passwordKey = await crypto.subtle.importKey(
+                'raw',
+                encoder.encode(password),
+                { name: 'PBKDF2' },
+                false,
+                ['deriveBits', 'deriveKey']
+            );
+            
+            const key = await crypto.subtle.deriveKey(
+                {
+                    name: 'PBKDF2',
+                    salt: new Uint8Array(encryptedData.salt),
+                    iterations: 100000,
+                    hash: 'SHA-256'
+                },
+                passwordKey,
+                { name: 'AES-GCM', length: 256 },
+                false,
+                ['decrypt']
+            );
+            
+            try {
+                console.log('Attempting decryption with salt and iv:', encryptedData.salt, encryptedData.iv);
+                const decrypted = await crypto.subtle.decrypt(
+                    { name: 'AES-GCM', iv: new Uint8Array(encryptedData.iv) },
+                    key,
+                    new Uint8Array(encryptedData.encrypted)
+                );
+                
+                const decryptedText = new TextDecoder().decode(decrypted);
+                console.log('Decryption successful, first 50 chars:', decryptedText.substring(0, 50));
+                return decryptedText;
+            } catch (error) {
+                console.error('Decryption failed:', error);
+                throw new Error('Invalid password or corrupted encrypted data');
+            }
+        }
+
+        function parseFileContent(content) {
+            try {
+                let parsedContent = JSON.parse(content);
+
+                if (!('data' in parsedContent)) {
+                    throw new Error("File format is invalid: missing 'data' field");
+                }
+                
+                if (parsedContent.marker === "EBF_UNENCRYPTED_V3" || parsedContent.marker === "FILE_MARKERS.UNENCRYPTED_V3") {
+                    if (Array.isArray(parsedContent.data)) {
+                        parsedContent.data = lightweightDecrypt(parsedContent.data);
+                    }
+                }
+                
+                return parsedContent;
+            } catch (e) {
+                console.error("Error parsing content: ", e);
+                throw e;
+            }
+        }
+
         async function openFile(filePath, token) {
             const spinner = document.getElementById('spinner');
             const contentElement = document.getElementById('content');
             const wordCountEl = document.getElementById('wordCount');
+            const charCountEl = document.getElementById('charCount');
 
             try {
                 spinner.style.display = 'block';
+                console.log(`Fetching from: ${filePath}`);
+                
                 const response = await fetch(filePath, {
                     method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/vnd.github.v3+json',
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3.raw'
                     }
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to fetch file from GitHub');
+                    throw new Error(`Failed to fetch file from GitHub: ${response.status} ${response.statusText}`);
                 }
 
-                const githubData = await response.json();
-                const fileContent = decode(githubData.content);
-                let fileData = parseFileContent(fileContent);
-                    
+                const fileContent = await response.text();
+                console.log("Received content:", fileContent.substring(0, 100) + "...");
+                
+                let fileData;
+                try {
+                    fileData = parseFileContent(fileContent);
+                } catch (parseError) {
+                    contentElement.innerHTML = `<p>Error parsing file: ${parseError.message}</p>
+                        <p>Raw content sample: ${escapeHtml(fileContent.substring(0, 200))}...</p>`;
+                    return;
+                }
+                
                 if (fileData.marker === 'EBF_ENCRYPTED_V2') {
-                    const password = prompt('Enter file password:');
-                    fileData = await decryptContent(fileData, password);
+                    const password = prompt('This file is encrypted. Enter file password:');
+                    if (!password) {
+                        contentElement.innerHTML = 'Password required for encrypted file.';
+                        return;
+                    }
+                    
+                    try {
+                        const decryptedContent = await decryptContent(fileData, password);
+                        try {
+                            const parsedDecrypted = JSON.parse(decryptedContent);
+                            fileData.data = parsedDecrypted.data || parsedDecrypted;
+                            displayFileContent(fileData);
+                        } catch (jsonError) {
+                            fileData.data = decryptedContent;
+                            displayFileContent(fileData);
+                        }
+                    } catch (decryptError) {
+                        contentElement.innerHTML = `Decryption failed: ${decryptError.message}`;
+                    }
                 } else {
-                    contentElement.innerHTML = fileData.data;
-                    document.title = `${fileData.name} - EBF Viewer`;
-                    document.getElementById('title').textContent = fileData.name;
-                    const wordCount = fileData.data.split(/\s+/).length;
-                    wordCountEl.textContent = `${wordCount} words`;
-                    const charCount = fileData.data.length;
-                    document.getElementById('charCount').textContent = `${charCount} characters`;
+                    displayFileContent(fileData);
                 }
             } catch (error) {
                 console.error('Open failed:', error);
@@ -125,40 +201,83 @@
                 clearUrl();
             }
         }
+        
+        function displayFileContent(fileData) {
+            const contentElement = document.getElementById('content');
+            const wordCountEl = document.getElementById('wordCount');
+            const charCountEl = document.getElementById('charCount');
+            
+            if (!fileData) {
+                contentElement.innerHTML = 'Invalid file format: file data is missing.';
+                return;
+            }
+            
+            if (fileData.data === null || fileData.data === undefined) {
+                contentElement.innerHTML = 'File content is empty or could not be processed.';
+                return;
+            }
+            
+            const contentStr = String(fileData.data);
+            contentElement.innerHTML = contentStr;
+            document.title = `${fileData.name || 'Unnamed File'} - File Viewer`;
+            document.getElementById('title').textContent = fileData.name || 'Unnamed File';
+            
+            const wordCount = contentStr.split(/\s+/).filter(word => word.length > 0).length;
+            wordCountEl.textContent = `${wordCount} words`;
+            
+            const charCount = contentStr.length;
+            charCountEl.textContent = `${charCount} characters`;
+        }
 
-        async function decode(base64String, chunkSize = 1024) {
-    	  const binaryString = atob(base64String);
-    	  const length = binaryString.length;
-    	  const data = new Uint8Array(length);
-    
-    	  for (let i = 0; i < length; i += chunkSize) {
-    	    const end = Math.min(i + chunkSize, length);
-    	    for (let j = i; j < end; j++) {
-    	      data[j] = binaryString.charCodeAt(j);
-    	    }
-    	  }
-    
-    	  return new TextDecoder().decode(data);
-    	}
+        function decode(base64String) {
+            base64String = base64String.replace(/[^A-Za-z0-9+/=]/g, "");
+            
+            try {
+                const binaryString = atob(base64String);
+                const bytes = new Uint8Array(binaryString.length);
+                
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                
+                return new TextDecoder().decode(bytes);
+            } catch (e) {
+                console.error("Error decoding base64:", e);
+                throw e;
+            }
+        }
+        
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
         const urlParams = new URLSearchParams(window.location.search);
         const filePath = urlParams.get('file_path');
         const token = urlParams.get('auth_code');
         const auth = urlParams.get('auth');
 
-        if (auth !== 'BETA6.429LqQwaSDCRet^%3@') {document.getElementById('content').innerHTML = 'Invalid authentication token!';}
-        else {
+        if (auth !== 'BETA6.429LqQwaSDCRet^%3@') {
+            document.getElementById('content').innerHTML = 'Invalid authentication token!';
+            console.error('Authentication failed: Invalid auth parameter');
+        } else {
             if (token && filePath) {
+                console.log('Authentication successful, opening file...');
                 openFile(filePath, token);
             } else {
-                document.getElementById('content').innerHTML = 'No file provided.';
+                document.getElementById('content').innerHTML = 'No file path or auth code provided. URL must include file_path and auth_code parameters.';
+                console.error('Missing required parameters: file_path or auth_code');
             }
         }
 
         function clearUrl() {
             const url = new URL(window.location);
             url.searchParams.delete('auth_code');
-            window.history.replaceState({}, document.title, url.pathname);
+            window.history.replaceState({}, document.title, url.pathname + (url.search !== '?' ? url.search : ''));
         }
     </script>
 </body>
