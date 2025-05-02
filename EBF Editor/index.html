@@ -5911,7 +5911,7 @@
 	function shareFile(name, pth) {
 		const baseurl = window.location.protocol + "//" + window.location.host + window.location.pathname;
 		const viewType = '0';
-		const newURL = `https://eselagas.github.io/:r?file_pth=${pth}&authentication=${gtoken}&r_type=ebf_file-send`;
+		const newURL = `https://eselagas.github.io/:r?pth=${name}&loc=${pth}&id=${userId}&r_type=ebf_file`;
 		const final = newURL.replace(/ /g, ' ');
 
 		navigator.clipboard.writeText(final);
@@ -6456,25 +6456,44 @@
 		/* Run this first */
 	    if (!gtoken) await get_token();
 	    
+	    if (params.has('share')) {
+	    	openingFile();
+	    	path = 'https://api.github.com/repos/eselagas/app.files/contents/docs/' + params.get('f');
+	    	const _name = params.get('n');
+	    	const _path = params.get('p');
+	    	openFile({
+	          file_path: _path,
+	          file_name: _name,
+	          userId: userId,
+	          editorElement: get('editor'),
+	          canvasElement: get('drawingCanvas')
+	        });
+	        viewShare = true;
+	    }
+	    
 		if (params.get('user-Pref') === 'true') {
-			document.title = "Opening file...";
-			if (params.has('s_h')) {
-				syntax_highlight = params.get("s_h");
-			}
+			openingFile();
 			path = 'https://api.github.com/repos/eselagas/app.files/contents/docs/' + params.get('lo_File');
 			const _path = params.get('path_name');
 			const name = params.get('name');
-			log("Opening param file (from data)");
 			openFile({
 	          file_path: _path,
 	          file_name: name,
 	          userId: userId,
-	          editorElement: document.getElementById('editor'),
-	          canvasElement: document.getElementById('drawingCanvas')
+	          editorElement: get('editor'),
+	          canvasElement: get('drawingCanvas')
 	        });
 	    }
 
 	});
+	
+	function openingFile() {
+		document.title = "Opening file...";
+		if (params.has('s_h')) {
+			syntax_highlight = params.get("s_h");
+		}
+		log("Opening file from URL params");
+	}
 
 </script>
 </body>
