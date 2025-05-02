@@ -6460,9 +6460,8 @@
 	    	openingFile();
 	    	path = 'https://api.github.com/repos/eselagas/app.files/contents/docs/' + params.get('f');
 	    	const _name = params.get('n');
-	    	const _path = params.get('p');
 	    	openFile({
-	          file_path: _path,
+	          file_path: '',
 	          file_name: _name,
 	          userId: userId,
 	          editorElement: get('editor'),
