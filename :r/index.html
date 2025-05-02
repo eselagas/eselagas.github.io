@@ -70,11 +70,10 @@
                     case 'ebf_file':
                         const file_location = params.get('loc');
                         const user_id = params.get('id');
-                        const name = params.get('fpth');
-                        const _name = name.replace(/\uFF0F/g, '/');
-                        const type = params.get('tpe');
-                        let __type = type === '1' ? 'repo' : 'file';
-                        redirectUrl = `${file_location}?fileName=${_name}&path=${name}&user_id=${user_id}&viewType=${__type}&auth=1.247aBqWEAS3&i=true`;
+                        const _path = params.get('pth');
+                        const _name = _path.replace(/\uFF0F/g, '/');
+                        const lo_File = file_location.substring(62);
+                        redirectUrl = `https://eselagas.github.io/EBF%20Editor?share=true&f=${lo_File}&p=${_path}&user_id=${user_id}&n=${_name}&auth=1.247aBqWEAS3`;
                         break;
             
                     case 'ebf_file-send':
