@@ -70,7 +70,7 @@
                     case 'ebf_file':
                         const file_location = params.get('loc');
                         const user_id = params.get('id');
-                        const _path = (params.get('pth') || '').replace(/\uFF0F/g, '/');
+                        const _name = (params.get('pth') || '').replace(/\uFF0F/g, '/');
                         const lo_File = file_location.substring(5);
                         redirectUrl = `https://eselagas.github.io/EBF%20Editor?share=true&f=${lo_File}&user_id=${user_id}&n=${_name}&auth=1.247aBqWEAS3`;
                         break;
