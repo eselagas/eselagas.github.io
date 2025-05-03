@@ -6458,6 +6458,7 @@
 	    
 	    if (params.has('share')) {
 	    	openingFile();
+	    	if (params.get('auth') !== '1.247aBqWEAS3') return;
 	    	path = 'https://api.github.com/repos/eselagas/app.files/contents/docs/' + params.get('f');
 	    	const _name = params.get('n');
 	    	openFile({
@@ -6467,7 +6468,13 @@
 	          editorElement: get('editor'),
 	          canvasElement: get('drawingCanvas')
 	        });
-	        viewShare = true;
+	        
+	        if (params.get('share') === "multi") {
+		        viewShare = false;
+		        userId = params.get('user_id');
+	        } else viewShare = true;
+	        
+			window.history.replaceState(null, '', window.location.pathname);
 	    }
 	    
 		if (params.get('user-Pref') === 'true') {
