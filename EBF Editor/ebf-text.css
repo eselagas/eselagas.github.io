@@ -1,0 +1,120 @@
+	blockquote {
+		margin: 0 0 0 20px;
+	}
+	
+	ul, ol, p {
+		margin: 0px;
+	}
+	
+	/* Make sure markers are seen */
+	ol li::marker {font-weight: 550; visibility: visible;}
+	ul li::marker {visibility: visible;}
+	
+	/* Dot point styles - additional */
+	ul ul ul ul {
+		font-size: 13.5px;
+	}
+	
+	ul ul ul ul ul {
+		font-size: 12px;
+	}
+	
+	ul ul ul ul ul ul {
+		font-size: 11px;
+	}
+	
+	ul ul ul ul ul ul ul {
+		font-size: 10px;
+	}
+	
+	ul ul ul ul ul ul ul ul {
+		font-size: 9px;
+	}
+	
+	/* Numbered list styles */
+	ol ol {
+		list-style-type: lower-alpha;
+	}
+	
+	ol ol ol {
+		list-style-type: lower-roman;
+	}
+	
+	ol ol ol ol {
+		list-style-type: upper-roman;
+	}
+	
+	table, th, td {
+	    border-collapse: collapse;
+	    padding: 10px;
+	    border: 1px solid var(--border-color);
+    	background: var(--bg-white);
+    	box-shadow: 0 0 5px var(--shadow-light);
+	    border-radius: 2px;
+	}
+	
+	@media (max-width: 600px) {
+	    table {
+	        max-width: 100%;
+	        display: block;
+	        overflow-x: auto;
+	    }
+	    
+	    .resizer {
+	        width: 8px;
+	    }
+	}
+
+	th:hover, td:hover {
+	    box-shadow: 0 0 12px var(--shadow-medium);
+	}
+	
+	td {
+		position: relative;
+	}
+	
+	.spacer {
+		height: 0;
+		width: 0;
+		border: 0;
+		outline: 0;
+	}
+	
+	.m100 {
+		margin: 100px;
+	}
+	
+	.m30 {
+		margin: 30px;
+	}
+	
+	.m15 {
+		margin: 15px;
+	}
+	
+	.m5 {
+		margin: 5px;
+	}
+	
+	b {
+		font-weight: 780;
+	}
+	
+	/* Links */
+	a {
+		cursor: pointer;
+		color: var(--primary-color);
+		text-decoration: underline dotted;
+	}
+	
+	a:hover {
+		color: var(--primary-dark);
+		text-decoration: underline solid;
+	}
+	
+	#editor h1,
+	#editor h2,
+	#editor h3 {
+		margin: 10px 0;
+		text-decoration: underline;
+	}
