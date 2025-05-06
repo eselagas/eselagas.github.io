@@ -1,0 +1,114 @@
+	span[class^="keyword-"] {
+	  font-weight: semi-bold;
+	}
+
+	.keyword-function {
+	  color: #007acc;
+	}
+
+	.keyword-const {
+	  color: #5c2d91;
+	}
+
+	.keyword-let {
+	  color: #5c2d91;
+	}
+
+	.keyword-var {
+	  color: #d97706;
+	}
+
+	.keyword-return {
+	  color: #ff5722;
+	}
+
+	.keyword-if,
+	.keyword-else {
+	  color: #009688;
+	}
+
+	.keyword-for,
+	.keyword-while,
+	.keyword-do {
+	  color: #4caf50;
+	}
+
+	.keyword-switch,
+	.keyword-case,
+	.keyword-default {
+	  color: #8e44ad;
+	}
+
+	.keyword-break,
+	.keyword-continue {
+	  color: #c0392b;
+	}
+
+	.keyword-try,
+	.keyword-catch,
+	.keyword-finally,
+	.keyword-throw {
+	  color: #e67e22;
+	}
+
+	.keyword-class,
+	.keyword-extends,
+	.keyword-super {
+	  color: #3f51b5;
+	}
+
+	.keyword-import,
+	.keyword-export {
+	  color: #9c27b0;
+	}
+
+	.keyword-new {
+	  color: #673ab7;
+	}
+
+	.keyword-this {
+	  color: #2196f3;
+	}
+
+	.keyword-delete,
+	.keyword-typeof,
+	.keyword-void,
+	.keyword-in,
+	.keyword-instanceof {
+	  color: #607d8b;
+	}
+
+	.keyword-await,
+	.keyword-async {
+	  color: #00bcd4;
+	}
+
+	.keyword-yield {
+	  color: #ffc107;
+	}
+	
+	.text-bracket {
+	  color: #00bcd4;
+	}
+
+	.text-comma {
+	  color: #ff9800;
+	}
+
+	.text-comment {
+	  color: #8e44ad;
+	  font-style: italic;
+	}
+
+	.text-javascript-comment {
+	  color: #8e44ad;
+	  font-style: italic;
+	}
+
+	.curly-brace-open {
+	  color: #4caf50;
+	}
+
+	.curly-brace-closed {
+	  color: #4caf50;
+	}
