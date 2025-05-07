@@ -1088,3 +1088,19 @@
 	.fwdLink {
 		margin: 10px;
 	}
+
+	.warning {
+		text-decoration: underline;
+		color: orange;
+		cursor: pointer;
+	}
+	
+	.error {
+		color: red;
+	}
+	
+	.Good {
+		color: green;
+	}
+	
+	#accountAlert {display: block;}
