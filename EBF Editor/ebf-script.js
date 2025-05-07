@@ -1,4 +1,4 @@
-function prompts(text, placeholder) {
+	function prompts(text, placeholder) {
 	  return new Promise((resolve, reject) => {
 	    const modalOverlay = document.createElement('div');
 	    modalOverlay.id = 'prompt';
@@ -94,13 +94,6 @@ function prompts(text, placeholder) {
 		ln_num++;
 	}
 	
-	function _null(...vari) {
-		for (const val of vari) {
-			if (!val) { return true; log(`Variable ${val} = null`); }
-			else return false;
-        }
-	}
-	
 	function set(targ, type, content) {
 		switch (type) {
 			case 'text':
@@ -132,8 +125,7 @@ function prompts(text, placeholder) {
             ]
         };
         
-	let isConnected = navigator.onLine;
-	if (!isConnected) {get('wifi-status').style.display = 'block'; console.warn('No internet connection.');}
+	let isConnected = navigator.onLine;	
 	const boldButton = get('bold');
     const italicButton = get('italic');
     const underlineButton = get('underline');
@@ -336,7 +328,6 @@ function prompts(text, placeholder) {
 		const loadText = document.querySelector(".ls_text");
 		const button = select.querySelector(".select-button");
 		const list = select.querySelector(".select-list");
-
 		const availableFonts = isConnected ? fonts.online : fonts.offline;
 		
 		button.onclick = () => {
@@ -365,6 +356,7 @@ function prompts(text, placeholder) {
 			if (!select.contains(event.target)) {
 				list.style.display = "none";
 				changeFont(initial_font);
+				document.removeEventListener("click", resetFont);
 			}
 		}
 	}
@@ -380,11 +372,15 @@ function prompts(text, placeholder) {
     });
 
 	/* Progress Spinner */
-	function showSpinner() {
+	function showSpinner(v) {
+		if (v) get('ls_text').textContent = v;
 	    get('loverlay').style.display = 'flex';
 	}
 
 	function endSpinner() {
+	    const lsText = get('ls_text');
+	    if (lsText) lsText.textContent = "Working on it...";
+	    
 	    get('loverlay').style.display = 'none';
 	}
 
@@ -394,40 +390,142 @@ function prompts(text, placeholder) {
 	
 	/* Sign in */
 	function promptSignIn() {
+		if (!isConnected) {
+			alert("You cannot sign in at this time");
+			return;
+		}
+		
 	    const password = document.getElementById('password_val');
 	    const username = document.getElementById('username_val');
 	    password.value = '';
 	    username.value = '';
 	    document.getElementById('sign_in').style.display = "block";
 
-	    password.addEventListener('keydown', (e) => {
-	        if (e.key === 'Enter') {
-	            signIn();
-	        }
-	    });
+	    password.addEventListener('keydown', checkKey);
 
-	    username.addEventListener('keydown', (e) => {
-	        if (e.key === 'Enter') {
+	    username.addEventListener('keydown', checkKey);
+	    
+	    function checkKey(e) {
+	    	if (e.key === 'Enter') {
 	            signIn();
 	        }
-	    });
+        }
 	}
 	
-	function signIn() {
+	async function signIn() {
 	  showSpinner();
-	    const password = get('password_val').value;
-	    const username = get('username_val').value;
+	    const p = get('password_val').value;
+	    const u = get('username_val').value;
+	    const enc_path = btoa(`${u}:${p}`);
+	    
+	    const validate = await validateAccount(enc_path);
+	    
+	    if (!validate) {
+	    	endSpinner();
+	    	return;
+	    }
+	    
 	    get('sign_in').style.display = "none";
+	    get('alert').style.display = "none";
 	    
-	    const encodedUsername = btoa(`${username}:${password}`);
-	    
-	    userId = encodedUsername;
+	    userId = enc_path;
 	    localStorage.setItem('user_id', userId);
-	    localStorage.setItem('ebf_username', username);
-	    const edContent = get('editor').innerHTML;
-	    location.reload();
+	    localStorage.setItem('ebf_username', validate.name || u);
 	    endSpinner();
+	    location.reload();
 	}
+	
+	async function validateAccount(enc_path) {
+		const validation = await checkUserFolder(enc_path);
+		
+		const alert = get("accountAlert");
+		alert.onclick = '';
+		if (!validation) {
+			alert.style.display = "block";
+			alert.textContent = "Invalid account.";
+			alert.className = "error";
+			return false;
+		} else if (validation === "warning") {
+			alert.style.display = "block";
+			alert.textContent = "Please register your account.";
+			alert.className = "warning";
+			
+			const p = get('password_val').value;
+	    	const u = get('username_val').value;
+	    	
+			alert.onclick = function() {
+			    window.open(`create-account.html?u=${u}&p=${btoa(p)}`, "_blank", "width=450,height=700");
+			    alert("Registering Account");
+			};
+			
+			return false;
+		} else {
+			alert.className = "hide";
+			return JSON.parse(atob(validation.content));
+		}
+	}
+	
+	async function checkUserFolder(pth) {
+	    const urls = [
+	        `https://api.github.com/repos/eselagas/app.files/contents/docs/accounts/${pth}`,
+	        `https://api.github.com/repos/eselagas/app.files/contents/docs/${pth}`
+	    ];
+
+	    try {
+	        const response1 = await fetch(urls[0], {
+	            method: 'GET',
+	            headers: {
+	                'Authorization': `token ${gtoken}`,
+	                'Accept': 'application/vnd.github.v3+json'
+	            }
+	        });
+
+	        if (response1.ok) {
+	            return await response1.json();
+	        }
+
+	        if (response1.status !== 404) {
+	            console.error(`Request failed with status: ${response1.status}`);
+	            return false;
+	        }
+
+	        console.warn(`Account not found: ${pth}, trying folder...`);
+
+	        const response2 = await fetch(urls[1], {
+	            method: 'GET',
+	            headers: {
+	                'Authorization': `token ${gtoken}`,
+	                'Accept': 'application/vnd.github.v3+json'
+	            }
+	        });
+
+	        if (response2.ok) {
+	            return "warning";
+	        }
+
+	        if (response2.status !== 404) {
+	            console.error(`Request failed with status: ${response2.status}`);
+	        }
+
+	        return false;
+	    } catch (error) {
+	        console.error("Network error:", error);
+	        return false;
+	    }
+	}
+	
+	window.addEventListener("message", function(event) {
+	    //if (!event.origin.includes("eselagas.github.io")) return;
+
+	    const aD = event.data;
+
+	    get('password_val').value = aD.password;
+	    get('username_val').value = aD.username;
+	    
+	    const al = get("accountAlert");
+	    al.className = "Good";
+	    al.textContent = "Account created successfully!";
+	}, false);
 	
 	/* Image handling */
 	function updateImageAttributes() {
@@ -2662,6 +2760,12 @@ function prompts(text, placeholder) {
 
 	  return new TextDecoder().decode(data);
 	}
+	
+	let pref = true;
+	const checkbox = document.getElementById('prefCheckbox');
+	checkbox.addEventListener('change', () => {
+	    pref = checkbox.checked;
+	});
 
 	async function openFile({
 	    file_path = null,
@@ -2719,7 +2823,7 @@ function prompts(text, placeholder) {
 	                hideModal();
 	            }
 	            fletype = 1;
-	            modURL('user-Pref', true);
+	            modURL('user-Pref', pref);
 	        } else {
 	            /* Handle local files */
 	            fileData = parseFileContent(fileContent);
@@ -3009,10 +3113,15 @@ function prompts(text, placeholder) {
 		themeManager.loadTheme();
 		updateFontOptions();
 		
+		if (!isConnected) {
+			get('wifi-status').style.display = 'block';
+			console.warn('No internet connection.');
+		}
+		
 		/* Run this first */
 	    if (!gtoken) await get_token();
 	    
-	    if (params.has('share')) {
+	    if (params.get('share') === "true") {
 	    	openingFile();
 	    	if (params.get('auth') !== '1.247aBqWEAS3') return;
 	    	path = 'https://api.github.com/repos/eselagas/app.files/contents/docs/' + params.get('f');
