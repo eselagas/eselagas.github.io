@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .logo {
+            max-width: 350px;
+            margin-bottom: 15px;
+        }
+        h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        form {
+            width: 80%;
+            max-width: 500px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <img src="EBF Editor.svg" alt="Logo" class="logo">
+    <h2>Create Account</h2>
+    <form id="accountForm">
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <input type="password" id="confirmPassword" placeholder="Retype Password" required>
+        <hr>
+        <h4>For Account Recovery</h4>
+        <input type="text" id="name" placeholder="Full Name">
+        <input type="email" id="email" placeholder="Email address">
+        <p id="error" class="error"></p>
+        <button id="sub" type="submit" class="btn">Create Account</button>
+    </form>
+
+    <script>
+    	const params = new URLSearchParams(window.location.search);
+    	
+    	if (params.has("u")) {
+    		document.getElementById("username").value = params.get("u");
+    	}
+    	
+    	if (params.has("p")) {
+    		document.getElementById("password").value = atob(params.get("p"));
+    	}
+    	
+        document.getElementById("accountForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const name = document.getElementById("name").value;
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const email = document.getElementById("email").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+            const errorElement = document.getElementById("error");
+
+            if (password.length < 4) {
+                errorElement.textContent = "Password must be at least 4 characters long.";
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                errorElement.textContent = "Passwords do not match.";
+                return;
+            }
+
+            const accDet = { name, email, username, password };
+            
+            document.getElementById("sub").textContent = "Creating account...";
+            const fileName = btoa(username + ':' + password);
+            const token = await get_token();
+            
+            await manifest(token, accDet, `https://api.github.com/repos/eselagas/app.files/contents/docs/accounts/${fileName}`);
+            await manifest(token, "", `https://api.github.com/repos/eselagas/app.files/contents/docs/${fileName}/.gitignore`);
+            
+            const forgotFormName = btoa(`;(${accDet.name}||/${accDet.username}@@#562${accDet.email}`);
+            await manifest(token, accDet, `https://api.github.com/repos/eselagas/app.files/contents/docs/backups/acc/${forgotFormName}`);
+            
+            if (window.opener) {
+			    window.opener.postMessage(accDet, "*");
+			}
+		    
+		    localStorage.setItem("accountDetails", JSON.stringify(accDet));
+		    
+			window.close();
+        });
+        
+        async function manifest(token, content, url) {
+		    try {
+		        const encodedContent = btoa(JSON.stringify(content));
+
+		        const createResponse = await fetch(url, {
+		            method: "PUT",
+		            headers: {
+		                Authorization: `token ${token}`,
+		                "Content-Type": "application/json"
+		            },
+		            body: JSON.stringify({
+		                message: "Created account files",
+		                content: encodedContent
+		            })
+		        });
+
+		        if (!createResponse.ok) throw new Error(`Error creating file: ${createResponse.statusText}`);
+		    } catch (error) {
+		        console.error("GitHub API Error:", error);
+		    }
+		}
+		
+		async function get_token() {
+			const url = "https://ethanselagea.weebly.com/uploads/1/5/0/7/150702136/token.txt";
+		    try {
+		        const response = await fetch(url);
+		        if (!response.ok) {
+		            throw new Error(`HTTP error! Status: ${response.status}`);
+		        }
+		        return await response.text();
+		    } catch (error) {
+		        console.error("Error fetching file:", error);
+		    }
+		}
+    </script>
+</body>
+</html>
