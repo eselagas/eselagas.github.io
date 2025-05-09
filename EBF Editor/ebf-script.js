@@ -413,7 +413,7 @@
 	}
 	
 	async function signIn() {
-	  showSpinner();
+	  showSpinner("Signing you in...");
 	    const p = get('password_val').value;
 	    const u = get('username_val').value;
 	    const enc_path = btoa(`${u}:${p}`);
