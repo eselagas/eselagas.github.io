@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="https://flow.operacdn.com/ext/v1/img/favicon_64_4b10e4fdb7.webp">
     <meta name="description" content="A beautiful, advanced, styled clock app with timer, stopwatch, alarm and world clock. Best yet! And with constant updates.">
-    <meta name="keywords" content="Clock, Clock app, Clock App, Web Clock, Best Web Clock, eselagas, ESELAGAS, Eselagas, Best, #1, Timer, timer, Stop Watch, stopwatch, Stopwatch, StopWatch, Alarm, alarm, Alarm., timer, Timer, timer., Timer., world clock, World clock, World Clock, World-clock, World-Clock, World, Clock, clock, world, ">
+    <meta name="keywords" content="Clock, Clock app, Clock App, Web Clock, Best Web Clock, eselagas, ESELAGAS, Eselagas, Best, #1, Timer, timer, Stop Watch, stopwatch, Stopwatch, StopWatch, Alarm, alarm, Alarm., timer, Timer, timer., Timer., world clock, World clock, World Clock, World-clock, World-Clock, World, Clock, clock, world, EBF Editor, ebf editor, Ebf Editor, EBF EDITOR">
     <meta name="author" content="Eselagas">
     <title>Redirecting...</title>
 </head>
@@ -22,6 +22,12 @@
                   document.getElementById('rlink').href = redirectUrl;
                   window.location.href = './' + redirectUrl;
                 } else {window.location.href = "./Clock"; document.getElementById('rlink').href = "https://eselagas.github.io/Clock";}
+
+            if (params.has("a")) {
+                const a = params.get("a");
+                document.getElementById('rlink').href = a;
+                window.location.href = '/' + a;
+            }
         });
     </script>
 </body>
