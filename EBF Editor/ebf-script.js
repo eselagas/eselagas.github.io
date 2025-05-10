@@ -400,6 +400,7 @@
 	    password.value = '';
 	    username.value = '';
 	    document.getElementById('sign_in').style.display = "block";
+	    get("fp").classList.add("hide");
 
 	    password.addEventListener('keydown', checkKey);
 
@@ -412,6 +413,11 @@
         }
 	}
 	
+	function signIn_cancel() {
+		get('sign_in').style.display = 'none';
+		get('accountAlert').style.display = 'none';
+	}
+	
 	async function signIn() {
 	  showSpinner("Signing you in...");
 	    const p = get('password_val').value;
@@ -420,13 +426,20 @@
 	    
 	    const validate = await validateAccount(enc_path);
 	    
-	    if (!validate) {
+	    if (!validate || validate === "warn") {
 	    	endSpinner();
+	    	
+	    	if (validate !== "warn") {
+	    		get("fp").classList.remove("hide");
+    		} else {
+    			get("fp").classList.add("hide");
+			}
+			
 	    	return;
 	    }
 	    
 	    get('sign_in').style.display = "none";
-	    get('alert').style.display = "none";
+	    get('accountAlert').style.display = "none";
 	    
 	    userId = enc_path;
 	    localStorage.setItem('user_id', userId);
@@ -458,7 +471,7 @@
 			    alert("Registering Account");
 			};
 			
-			return false;
+			return "warn";
 		} else {
 			alert.className = "hide";
 			return JSON.parse(atob(validation.content));
@@ -515,7 +528,7 @@
 	}
 	
 	window.addEventListener("message", function(event) {
-	    //if (!event.origin.includes("eselagas.github.io")) return;
+	    if (!event.origin.includes("eselagas.github.io")) return;
 
 	    const aD = event.data;
 
@@ -525,6 +538,8 @@
 	    const al = get("accountAlert");
 	    al.className = "Good";
 	    al.textContent = "Account created successfully!";
+	    
+	    get("alert").style.display = "none";
 	}, false);
 	
 	/* Image handling */
@@ -575,16 +590,17 @@
 		const button = get('ok');
 		endSpinner();
 		alert.textContent = message;
+		alert.title = message;
 		modal.style.display = "block";
 		button.onclick = function() {
 			modal.style.display = "none";
 		}
+		
 		document.addEventListener("keydown", alert_handleKey);
 
 		function alert_handleKey(e) {
 			if (e.key === 'Enter') {
 				modal.style.display = "none";
-				modal.onkeyup = null;
 				document.removeEventListener("keydown", alert_handleKey);
 			}
 		}
@@ -2194,13 +2210,14 @@
 	    get('openFileModal').style.display = 'none';
 	    
 	  	document.addEventListener("keydown", saveOpt_click);
-	  
-		function saveOpt_click() {
-		  if (event.key === "Enter") {
-		    init_save();
-		    document.removeEventListener("keydown", saveOpt_click);
-		  }
-		}
+	}
+	
+	async function saveOpt_click(event) {
+	  if (event.key === "Enter") {
+	  	document.removeEventListener("keydown", saveOpt_click);
+	  	await delay(40);
+	    init_save();
+	  }
 	}
 
 	function selectSaveOption(option) {
@@ -2216,20 +2233,27 @@
 	    
 	}
 
+	async function delay(ms) {
+	    return new Promise(resolve => setTimeout(resolve, ms));
+	}
+
 	async function init_save() {
 	    if (!selectedSaveOptions.encryption || !selectedSaveOptions.saveLocation) {
 	        alert("Please select both encryption and save options");
 	        return;
 	    }
 
-		if (!fileName) { 
-			fileName = await prompts("Enter filename:", "Untitled Document"); 
-			changeDocTitle(fileName);
-		}
-		
-		if (selectedSaveOptions.saveLocation.includes('download')) {
-            proceed_save();
-        } else dispModal('save');
+	    if (!fileName) {
+	        await delay(70);
+	        fileName = await prompts("Enter filename:", "Untitled Document");
+	        changeDocTitle(fileName);
+	    }
+
+	    if (selectedSaveOptions.saveLocation.includes('download')) {
+	        proceed_save();
+	    } else {
+	        dispModal('save');
+	    }
 	}
 	
 	async function proceed_save() {
@@ -2242,8 +2266,8 @@
 	            /* Encryption */
 	            showPasswordModal("Set Password for Encryption", async (password) => {
 	                try {
-	                    if (!password || password.length < 3) {
-	                        throw new Error("Password must be at least 3 characters long.");
+	                    if (!password || password.length < 4) {
+	                        throw new Error("Password must be at least 4 characters long.");
 	                    }
 	                    await saveFile({
 	                        fileName,
@@ -2252,10 +2276,9 @@
 	                        editorElement: get('editor'),
 	                        drawingData: savedDrawingData
 	                    });
-	                    hideModal();
 	                } catch (error) {
 	                    console.error("Error during encrypted save:", error);
-	                    alert('Failed to save file: ' + error.message);
+	                    alert('Encryption error: ' + error.message);
 	                }
 	            }, showSaveOptions);
 	        } else {
@@ -2266,11 +2289,18 @@
 	                editorElement: get('editor'),
 	                drawingData: savedDrawingData
 	            });
-	            hideModal();
 	        }
+	        
+	        hideModal();
+	        alert("Save Successful!");
 	    } catch (error) {
-	        console.error("Error in proceed_save():", error);
-	        alert("Err in proceed_save(): " + error.message);
+	        console.error(error + "\nIn proceed_save()");
+	        if (error.message === "Failed to save the file") {
+	        	alert("Please use a different file name");
+	        	hideModal();
+        	} else {
+	        	alert("Error saving item! " + error);
+        	}
 	    }
 	}
 	
@@ -2619,6 +2649,8 @@
 	    document.querySelectorAll('.save-option').forEach(opt => {
 	        opt.classList.remove('selected');
 	    });
+	    
+	    document.removeEventListener("keydown", saveOpt_click);
 
 	    endSpinner();
 	}
