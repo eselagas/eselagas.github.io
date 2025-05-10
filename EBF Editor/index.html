@@ -33,11 +33,11 @@
 			<input type="text" id="username_val">
 			<label for="password_val" class="label">Enter Password</label>
 			<input type="password" id="password_val">
-			<a class="center" style="margin-bottom: 15px" onclick='window.open("verify-account.html", "_blank")'>Forgot Password</a>
+			<a class="center" id="fp" style="margin-bottom: 15px" onclick='window.open("verify-account.html", "_blank")'>Forgot Password</a>
 			<alert style="display: none; margin: 5px;" id="accountAlert">- NO DATA -</alert>
 			<button onclick="signIn()" title="Sign into your account">Sign In</button>
 			<a class="fwdLink center" onclick='window.open("create-account.html", "_blank", "width=450,height=700"); alert("Creating Account");'>Create account</a>
-			<button class="cancel" onclick="get('sign_in').style.display = 'none';">Cancel</button>
+			<button class="cancel" onclick="signIn_cancel()">Cancel</button>
 		</div>
 	</div>
 
