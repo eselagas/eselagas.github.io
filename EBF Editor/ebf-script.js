@@ -368,6 +368,7 @@
 	        textSelection = true;
         } else if (openFileModal.style.display === 'block') {
         	e.preventDefault();
+        	//showCCM(e.pageX, e.pageY);
         }
     });
 
@@ -2204,6 +2205,15 @@
 	    if (!isConnected) { get('gh').style.display = 'none'; }
 	    else { get('gh').style.display = 'block'; }
 	    
+	    const gh = get('gh');
+	    if (viewShare) {
+	    	gh.style.opacity = '0.5';
+	    	gh.onclick = null;
+    	} else {
+	    	gh.style.opacity = '1.0';
+	    	gh.onclick = () => selectSaveOption('github');
+    	}
+	    
 	    get('modalOverlay').style.display = 'block';
 	    get('saveOptionsModal').style.display = 'block';
 	    get('passwordModal').style.display = 'none';
@@ -2324,11 +2334,12 @@
 
 	let dir = [];
 	let addListener = true;
+	let deletedFiles = [];
 	async function show_FL() {
 	  const filesList = document.getElementById('savedFilesList');
 	  const confOpen = get('confopen');
 	  const createFolder = get('create-folder');
-	  
+
 	  createFolder.style.display = "flex";
 
 	  if (operation) {
@@ -2359,29 +2370,50 @@
 	    });
 
 	    if (!response.ok) {
-	      console.warn("GitHub didn't respond / no files uploaded");
-	      displayMessage(filesList, "Please upload a file to see it here.", "no_file", "Upload a file or open a local one");
+	      console.warn(`GitHub didn't respond: ${response.status}`);
+	      displayMessage(filesList, `Error ${response.status}: Unable to retrieve files.`, "error", "Try again later.");
 	      endSpinner();
 	      return;
 	    }
 
-	    const githubFiles = await response.json();
+	    let githubFiles;
+	    try {
+	      githubFiles = await response.json();
+	    } catch (error) {
+	      console.error("Failed to parse JSON:", error);
+	      displayMessage(filesList, "Error retrieving file list.", "error", "Try again later.");
+	      endSpinner();
+	      return;
+	    }
+
 	    filesList.innerHTML = '';
 	    updateDirList();
 
-	    githubFiles.forEach(file => {
-	      if (file.name === '.gitignore') return;
-	      createFileItem(filesList, file);
-	    });
+	    if (!githubFiles || githubFiles.length === 0) {
+	      displayMessage(filesList, "Upload a file to see it here", "no_file", "Upload a file to GitHub to see it here.");
+	      endSpinner();
+	      return;
+	    }
 
-	    if (!filesList.innerHTML) {
-	      displayMessage(filesList, "Please upload a file to see it here.", "no_file", "Save a file to this location");
+		githubFiles.sort((a, b) => {
+		  	if (a.type === 'dir' && b.type !== 'dir') return -1;
+		  	if (a.type !== 'dir' && b.type === 'dir') return 1;
+		  return a.name.localeCompare(b.name);
+		});
+
+		githubFiles.forEach(file => {
+		  if (file.name === '.gitignore') return;
+		  createFileItem(filesList, file);
+		});
+
+	    if (!filesList.innerHTML.trim()) {
+	      displayMessage(filesList, "Please upload a file to see it here.", "no_file", "Save a file to GitHub to see it here.");
 	    }
 
 	    endSpinner();
 	  } catch (error) {
-	    console.error('An error occurred:', error);
-	    alert('An error occurred: ' + error.message);
+	    console.error("An error occurred:", error);
+	    alert(`An error occurred: ${error.message}`);
 	    endSpinner();
 	  }
 	}
@@ -2399,12 +2431,16 @@
 	}
 
 	function displayMessage(container, message, className, title) {
-	  container.innerHTML = `<p style="color: #575757;" class="${className}" title="${title}">${message}</p>`;
+	  container.innerHTML = `<p class="${className}" title="${title}">${message}</p>`;
 	}
 
 	function createFileItem(filesList, file) {
 	  const fileItem = document.createElement('div');
 	  const ftitle = file.name.replace(/／/g, '/');
+	  if (deletedFiles.includes(ftitle)) {
+	  	fileItem.className = 'deleted-file-item';
+	  	return;
+  	  }
 	  fileItem.className = 'saved-file-item';
 	  fileItem.id = ftitle;
 
@@ -2452,6 +2488,14 @@
 	    });
 	  }
 	}
+	
+	function copyFileName(event) {
+		
+	}
+	
+	function openInNewTab(event) {
+		
+	}
 
 	function updateDirList() {
 	  const dirList = document.getElementById('dir_list');
@@ -2493,7 +2537,8 @@
 
 	async function deleteFile(filePath, id, name) {
 	    try {
-	    	showSpinner();
+	    	const sName = `Deleting:\n"${name}"`;
+	    	showSpinner(sName);
 	        const getResponse = await fetch(`https://api.github.com/repos/eselagas/app.files/contents/${filePath}`, {
 	            method: 'GET',
 	            headers: {
@@ -2530,13 +2575,15 @@
 	        console.error('An error occurred:', error);
 	        alert('An error occurred: ' + error.message);
 	    } finally {
-	        endSpinner();
+	    	deletedFiles.push(name);
 	        dispModal('open');
+	        showSpinner(sName);
 	    }
 	}
 	
 	async function deleteFolder(folderPath) {
 	    try {
+	    	const sName = `Deleting:\n"${folderPath}"`;
 	        showSpinner();
 	        const getResponse = await fetch(`https://api.github.com/repos/eselagas/app.files/contents/${folderPath}`, {
 	            method: 'GET',
