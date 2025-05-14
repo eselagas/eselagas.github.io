@@ -22,7 +22,7 @@
 	</div>
 
 	<div id="wifi-status" style="display: none;">
-		<h4>You are currently offline. Some features may not work as expected.</h4>
+		<h4>Your Wi-Fi connection is unstable. Some features may not work as expected.</h4>
 		<button class="close" style="color: white; font-size: 30px; top: 6px;" title="Close" onclick="get('wifi-status').style.display = 'none';">&times;</button>
 	</div>
 
@@ -33,7 +33,7 @@
 			<input type="text" id="username_val">
 			<label for="password_val" class="label">Enter Password</label>
 			<input type="password" id="password_val">
-			<a class="center" id="fp" style="margin-bottom: 15px" onclick='window.open("verify-account.html", "_blank")'>Forgot Password</a>
+			<a class="center hide" id="fp" style="margin-bottom: 15px" onclick='window.open("verify-account.html", "_blank")'>Forgot Password?</a>
 			<alert style="display: none; margin: 5px;" id="accountAlert">- NO DATA -</alert>
 			<button onclick="signIn()" title="Sign into your account">Sign In</button>
 			<a class="fwdLink center" onclick='window.open("create-account.html", "_blank", "width=450,height=700"); alert("Creating Account");'>Create account</a>
@@ -52,9 +52,8 @@
 
 	<div id="ccm" style="display: none;">
 	    <ul style="padding: 3px;">
-	    	<li id="ccm_li_head" class="center">Insert List</li>
-	        	<li class="li center" onclick="unordered_list()">Dot Point</li>
-	        	<li class="li center" onclick="ordered_list()">Numbered</li>
+        	<li class="li center" onclick="copyFileName(this)">Copy file name</li>
+        	<li class="li center" onclick="openInNewTab(this)">Open in New Tab</li>
 	    </ul>
 	</div>
 
@@ -302,7 +301,7 @@
 	        
 	        <div id="version">
 	        	<h3>Version</h3>
-	        	<p class="p2"> - 16.3</p>
+	        	<p class="p2"> - 16.7</p>
 	        </div>
 
 	        <div class="center">
@@ -419,7 +418,7 @@
 	        </div>
 	    </div>
 	    <div class="save-options">
-	        <div class="save-option" id="gh" onclick="selectSaveOption('github')">
+	        <div class="save-option" id="gh" onclick="">
 	            <strong>Save to Cloud</strong>
 	            <p class="p1">Store document in GitHub</p>
 	        </div>
@@ -436,7 +435,7 @@
 
 	<div id="alert" class="modal" style="display: none;" title="Alert">
 		<h3 id="alert-msg"></h3>
-		<button id="ok">OK</button>
+		<button id="ok" title="OK">OK</button>
 	</div>
 	  
 	<input type="file" id="fileInput" accept=".ebf" style="display:none">
