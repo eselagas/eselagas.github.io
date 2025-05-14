@@ -141,6 +141,7 @@
 	  box-shadow: 0 4px 6px var(--shadow-light);
 	  padding: 5px;
 	  border-radius: 12px;
+	  min-width: max-content;
 	  z-index: 10;
 	}
 	
