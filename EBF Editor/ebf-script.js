@@ -330,6 +330,8 @@
 		const list = select.querySelector(".select-list");
 		const availableFonts = isConnected ? fonts.online : fonts.offline;
 		
+		list.innerHTML = "";
+		
 		button.onclick = () => {
 			const btn_val = button.textContent;
 			initial_font = btn_val === "Select Font" ? "Roboto" : btn_val;
@@ -729,6 +731,8 @@
 	            'danger-dark': '#c82333',
 	            'offline-bg': '#000040'
 	        };
+        	
+        	this.def = { ...this.defaultTheme };
 	    }
 
 	    updateColor(variableName, value) {
@@ -1100,7 +1104,7 @@
 
 			const computedStyle = window.getComputedStyle(parentNode);
 			let currentFontSize = parseInt(computedStyle.fontSize, 10) || 16;
-			let newFontSize = Math.min(Math.max(increase ? currentFontSize + 1 : currentFontSize - 1, 7), 140);
+			let newFontSize = Math.min(Math.max(increase ? currentFontSize + 1 : currentFontSize - 1, 7), 400);
 
 			parentNode.style.fontSize = `${newFontSize}px`;
 		}
@@ -3062,21 +3066,62 @@
 	}
 	
 	/* Connection Status */
-	window.addEventListener('online', () => {
-        get('wifi-status').style.display = 'none';
-        log('Back online!');
-    	isConnected = true;
-    	updateFontOptions();
-    	updateImageAttributes();
-    });
+	let LOT = Date.now();
+	let offlineCount = parseInt(sessionStorage.getItem("offlineCount")) || 0;
+	const ws = get("wifi-status"); 
+	let checkInterval = 8000;
 
-    window.addEventListener('offline', () => {
-        get('wifi-status').style.display = 'block';
-        console.warn('No internet connection.');
-        isConnected = false;
-        updateFontOptions();
-    });
+	function adjustCheckInterval() {
+	    if (offlineCount > 5) {
+	        checkInterval = Math.min(checkInterval + 4000, 20000); /* Max 20s */
+	    } else {
+	        checkInterval = Math.max(checkInterval - 2000, 2000); /* Min 2s */
+	    }
+	}
 
+	async function checkInternet() {
+	    let previousStatus = isConnected;
+
+	    try {
+	        const response = await fetch('https://jsonplaceholder.typicode.com/posts/1', { method: 'HEAD' });
+	        isConnected = response.ok;
+	    } catch (error) {
+	        isConnected = false;
+	        console.error('No internet access:', error);
+	    }
+
+	    ws.style.display = isConnected ? 'none' : 'block';
+
+	    if (previousStatus !== isConnected && !isConnected) {
+	        const currentTime = Date.now();
+	        if (currentTime - LOT <= 120000) {
+	            offlineCount++;
+	            sessionStorage.setItem("offlineCount", offlineCount);
+	        }
+
+	        if (offlineCount > 5) {
+	            ws.textContent = "Your network connection is unstable.";
+	        }
+
+	        LOT = currentTime;
+	    }
+
+	    adjustCheckInterval();
+	}
+
+	setInterval(() => checkInternet(), checkInterval);
+
+	window.addEventListener("offline", () => {
+	    checkInternet();
+	});
+
+	window.addEventListener("online", () => {
+	    if (offlineCount > 0) {
+	        offlineCount = Math.max(offlineCount - 3, 0);
+	        sessionStorage.setItem("offlineCount", offlineCount);
+	    }
+	});
+	
 	function isContentModified() {
 		const element = document.querySelector('#editor');
 	    return element.dataset.modified === 'true';
