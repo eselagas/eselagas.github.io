@@ -22,7 +22,7 @@
 	</div>
 
 	<div id="wifi-status" style="display: none;">
-		<h4>Your Wi-Fi connection is unstable. Some features may not work as expected.</h4>
+		<h4>You are currently offline. Some features may not work as expected.</h4>
 		<button class="close" style="color: white; font-size: 30px; top: 6px;" title="Close" onclick="get('wifi-status').style.display = 'none';">&times;</button>
 	</div>
 
@@ -301,7 +301,7 @@
 	        
 	        <div id="version">
 	        	<h3>Version</h3>
-	        	<p class="p2"> - 16.7</p>
+	        	<p class="p2"> - 17.0</p>
 	        </div>
 
 	        <div class="center">
@@ -396,6 +396,7 @@
 	    <div id="openFileModal" class="modal" style="display: none;" title="Files List">
 	        <h2 id="operation"></h2>
 	        <div id="dir_list"></div>
+	        <input id="searchBar" placeholder="Search here..." autocomplete="off" autocorrect="off">
 	        <div class="saved-files-list" id="savedFilesList"></div>
 	        <div id="create-folder" onclick="crFolder()" title="Create New Folder"><svg xmlns="http://www.w3.org/2000/svg" width="22px" height="20px" viewBox="0 0 24 24" stroke="var(--text-primary)" stroke-width="2.5" stroke-linecap="round" fill="none" style="padding-right: 5px;"><path d="M17 12L7 12M12 17L12 7"/> <circle cx="12" cy="12" r="10"/></svg>Create Folder</div>
 	        <div class="center" style="margin-top: 15px;">
