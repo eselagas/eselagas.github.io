@@ -362,17 +362,30 @@
 			}
 		}
 	}
-	
-    document.addEventListener('contextmenu', (e) => {
-    	if (document.activeElement === editor) {
-	        e.preventDefault();
-	        getCaretCoordinates(editor);
-	        textSelection = true;
-        } else if (openFileModal.style.display === 'block') {
-        	e.preventDefault();
-        	//showCCM(e.pageX, e.pageY);
-        }
-    });
+
+	let wasTouch = false;
+
+	document.addEventListener('touchstart', () => {
+	  wasTouch = true;
+	  hideMenu();
+	}, { passive: true });
+
+	document.addEventListener('mousedown', () => {
+	  wasTouch = false;
+	});
+
+	document.addEventListener('contextmenu', (event) => {
+	  if (!wasTouch) {
+	    event.preventDefault();
+	  }
+	});
+
+	editor.addEventListener('mousedown', (event) => {
+	  if (event.button === 2 && !wasTouch) { 
+	      setTimeout(() => getCaretCoordinates(editor), 10);
+	      textSelection = true;
+	  }
+	});
 
 	/* Progress Spinner */
 	function showSpinner(v) {
@@ -2339,6 +2352,7 @@
 	let dir = [];
 	let addListener = true;
 	let deletedFiles = [];
+	const searchBar = get("searchBar");
 	async function show_FL() {
 	  const filesList = document.getElementById('savedFilesList');
 	  const confOpen = get('confopen');
@@ -2628,6 +2642,27 @@
 	        dispModal();
 	    }
 	}
+	
+	searchBar.addEventListener('input', () => {
+	  const query = searchBar.value.trim();
+	  const files = [...document.querySelectorAll('.saved-file-item')];
+
+	  files.forEach(item => {
+	    const fileTitleElement = item.querySelector('.open_file_title');
+	    const fileName = fileTitleElement.textContent;
+
+	    if (query) {
+	      const regex = new RegExp(`(${query})`, 'gi');
+	      fileTitleElement.innerHTML = fileName.replace(regex, '<span class="highlight">$1</span>');
+	      item.style.display = fileName.toLowerCase().includes(query.toLowerCase()) ? 'flex' : 'none';
+	      item.style.order = fileName.includes(query) ? '-1' : '0';
+	    } else {
+	      fileTitleElement.innerHTML = fileName;
+	      item.style.display = 'flex';
+	      item.style.order = '0';
+	    }
+	  });
+	});
 	
 	async function crFolder() {
 		const name = await prompts("Folder Name", "New Folder") + '/';
