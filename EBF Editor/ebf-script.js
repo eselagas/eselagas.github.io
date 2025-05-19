@@ -156,7 +156,6 @@
 	let men_hide = true;
 	let show_tm = true;
 	let isTransitioning = false;
-	let textSelection = false;
 
 	const CONFIG = {
 	    padding: 5,
@@ -363,27 +362,9 @@
 		}
 	}
 
-	let wasTouch = false;
-
-	document.addEventListener('touchstart', () => {
-	  wasTouch = true;
-	  hideMenu();
-	}, { passive: true });
-
-	document.addEventListener('mousedown', () => {
-	  wasTouch = false;
-	});
-
-	document.addEventListener('contextmenu', (event) => {
-	  if (!wasTouch) {
-	    event.preventDefault();
-	  }
-	});
-
 	editor.addEventListener('mousedown', (event) => {
-	  if (event.button === 2 && !wasTouch) { 
+	  if (event.button === 2) { 
 	      setTimeout(() => getCaretCoordinates(editor), 10);
-	      textSelection = true;
 	  }
 	});
 
@@ -2399,7 +2380,7 @@
 	      githubFiles = await response.json();
 	    } catch (error) {
 	      console.error("Failed to parse JSON:", error);
-	      displayMessage(filesList, "Error retrieving file list.", "error", "Try again later.");
+	      displayMessage(filesList, "Error retrieving file list.", "no_file", "Try again later.");
 	      endSpinner();
 	      return;
 	    }
@@ -2555,8 +2536,7 @@
 
 	async function deleteFile(filePath, id, name) {
 	    try {
-	    	const sName = `Deleting:\n"${name}"`;
-	    	showSpinner(sName);
+	    	get(name).innerHTML = `<i>Deleting "${name}"</i>`;
 	        const getResponse = await fetch(`https://api.github.com/repos/eselagas/app.files/contents/${filePath}`, {
 	            method: 'GET',
 	            headers: {
@@ -2593,9 +2573,8 @@
 	        console.error('An error occurred:', error);
 	        alert('An error occurred: ' + error.message);
 	    } finally {
-	    	deletedFiles.push(name);
-	        dispModal('open');
-	        showSpinner(sName);
+	    	get(name).classList.add("fade-hide");
+	    	setTimeout(() => get(name).style.display = "none", 780);
 	    }
 	}
 	
