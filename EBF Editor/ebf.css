@@ -400,7 +400,6 @@
 	    transition: background 0.4s ease;
 	    display: flex;
 	    align-items: center;
-	    animation: fadeIn 0.8s ease;
 	}
 	
 	.saved-file-item.folder {
@@ -977,6 +976,10 @@
 	#alert-msg {
 		margin-top: 0;
 		text-align: center;
+	}
+	
+	.fade-hide {
+		animation: fadeOut 0.8s ease;
 	}
 
 	.color-picker {
