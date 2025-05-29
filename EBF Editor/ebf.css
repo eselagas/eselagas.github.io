@@ -1,3 +1,4 @@
+<style>
 	:root {
 	    /* Primary Colors */
 	    --primary-color: #6200ea;
@@ -823,6 +824,18 @@
 	    cursor: nwse-resize;
 	}
 	
+	.resize-handle.crop-mode {
+	    background: #007bff !important;
+	    border: 2px solid white;
+	    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+	    transform: scale(1.1);
+	}
+
+	.resize-handle.crop-mode:hover {
+	    background: #0056b3 !important;
+	    transform: scale(1.3);
+	}
+	
 	.rotateIcon {
 	  position: absolute;
 	  height: 15px;
@@ -1039,6 +1052,17 @@
 		height: 24px;
 	    width: 24px;
 	    margin-right: 3px;
+	}
+	
+	.info {
+		color: var(--info-color);
+		text-decoration: underline dotted;
+	}
+	
+	.info:hover {
+		color: var(--info-color);
+		text-decoration: underline;
+		cursor: pointer;
 	}
 	
 	#create-folder {
