@@ -581,13 +581,20 @@
 	}
 	
 	/* Alerts */
-	function alert(message) {
+	function alert(message, html) {
 		const alert = get('alert-msg');
 		const modal = get('alert');
 		const button = get('ok');
 		endSpinner();
-		alert.textContent = message;
-		alert.title = message;
+		
+		if (html) {
+			alert.innerHTML = html;
+			alert.title = message;
+		} else {
+			alert.textContent = message;
+			alert.title = message;
+		}
+		
 		modal.style.display = "block";
 		button.onclick = function() {
 			modal.style.display = "none";
@@ -1612,15 +1619,12 @@
 	  return chunkHtml;
 	}
 
-	get('editor').addEventListener('click', function(event) {
-	  if (event.target.tagName === 'TD' || event.target.tagName === 'TH') {
-		    selectedCell = event.target;
-		    if (selectedCell.textContent.trim() !== '') {
-		        showToolbar('textToolbar');
-		    } else {
-		        showToolbar('tableToolbar');
-		    }
-		}
+	editor.addEventListener('click', function(event) {
+	    const table = event.target.closest('table');
+	    if (table) {
+	        selectedCell = event.target.closest('td, th');
+	        showToolbar('tableToolbar');
+	    }
 	});
 
 	function table_add(action) {
@@ -1718,52 +1722,12 @@
     }
 
 	let activeWrapper = null;
-
 	const imageWrappers = new Set();
-
 	const transformStates = new Map();
+	const cropStates = new Map();
 
-	editor.addEventListener('click', (event) => {
-	    const target = event.target;
-
-	    if (target.tagName === 'A') {
-	        event.preventDefault();
-	        hyperlink_click(event);
-	        if (target.href && !event.ctrlKey) {
-	            window.open(target.href, '_blank');
-	        }
-	        return;
-	    }
-
-	    if (!target.closest('.resizable') && !target.classList.contains('resize-handle') && !target.classList.contains('rotateIcon') && target.tagName !== 'IMG') {
-	        deselectAllImages();
-	        showToolbar('textToolbar');
-	        return;
-	    }
-
-	    if (target.tagName === 'IMG') {
-	        deselectAllImages();
-	        
-	        selectedImage = target;
-	        const wrapper = target.closest('.resizable') || wrapImage(selectedImage);
-	        activeWrapper = wrapper;
-	        
-	        wrapper.classList.add('resizing');
-	        addResizeHandles(wrapper);
-	        
-	        if (!transformStates.has(wrapper)) {
-	            transformStates.set(wrapper, {
-	                translateX: 0,
-	                translateY: 0,
-	                rotateAngle: 0
-	            });
-	        }
-	        
-	        showToolbar('imageToolbar');
-	    }
-	});
-
-	/* Image dragging */
+	let wrapperInitialX = 0;
+	let wrapperInitialY = 0;
 	let x_offset = 0;
 	let y_offset = 0;
 	let isRotating = false;
@@ -1777,42 +1741,63 @@
 	    currentHandle: null
 	};
 
+	let cropState = {
+	    startX: 0,
+	    startY: 0,
+	    currentHandle: null,
+	    initialCrop: null
+	};
+
+	let hideTimeout;
+
+	editor.addEventListener('click', (event) => {
+	    const target = event.target;
+
+	    if (target.tagName === 'A') {
+	        event.preventDefault();
+	        hyperlink_click(event);
+	        if (target.href && !event.ctrlKey) {
+	            window.open(target.href, '_blank');
+	        }
+	        return;
+	    }
+
+	    if (!target.closest('.resizable') && !target.classList.contains('resize-handle') && 
+	        !target.classList.contains('rotateIcon') && target.tagName !== 'IMG') {
+	        deselectAllImages();
+	        showToolbar('textToolbar');
+	        return;
+	    }
+
+	    if (target.tagName === 'IMG') {
+	        selectImage(target);
+	    }
+	});
+
 	document.addEventListener("mousedown", (event) => {
 	    const target = event.target;
 	    
 	    const wrapper = target.closest('.resizable');
 	    if (!wrapper) {
-	        if (!target.tagName === 'BUTTON') {
+	        if (target.tagName !== 'BUTTON') {
 	            deselectAllImages();
 	        }
 	        return;
 	    }
 	    
-	    if (wrapper) {
-	        deselectAllImages();
-	        
-	        activeWrapper = wrapper;
-	        wrapper.classList.add('resizing');
-	        selectedImage = wrapper.querySelector('img');
-	        
-	        if (!wrapper.querySelector('.resize-handle')) {
-	            addResizeHandles(wrapper);
-	        }
-	        
-	        if (!transformStates.has(wrapper)) {
-	            transformStates.set(wrapper, {
-	                translateX: 0,
-	                translateY: 0,
-	                rotateAngle: 0
-	            });
-	        }
-	        
-	        showToolbar('imageToolbar');
+	    if (wrapper && !wrapper.classList.contains('resizing')) {
+	        selectWrapper(wrapper);
 	    }
 
 	    if (target.classList.contains("resize-handle")) {
-	        resizeState.currentHandle = target.classList[1];
-	        initResize(event);
+	        const cropStateData = cropStates.get(wrapper);
+	        if (cropStateData && cropStateData.active) {
+	            cropState.currentHandle = target.classList[1];
+	            initCropResize(event);
+	        } else {
+	            resizeState.currentHandle = target.classList[1];
+	            initResize(event);
+	        }
 	        return;
 	    }
 
@@ -1823,20 +1808,18 @@
 	    }
 
 	    if ((target.tagName === "IMG" || target === wrapper) && wrapper.classList.contains("resizing")) {
-		    isDragging = true;
-		    selectedImage = wrapper.querySelector("img");
-		    selectedImage.draggable = false;
-		    
-		    const currentTransform = transformStates.get(wrapper);
-		    
-		    const rect = wrapper.getBoundingClientRect();
-		    x_offset = event.clientX - rect.left;
-		    y_offset = event.clientY - rect.top;
-		    
-		    wrapperInitialX = rect.left;
-		    wrapperInitialY = rect.top;
-		}
-	}, { passive: true });
+	        isDragging = true;
+	        selectedImage = wrapper.querySelector("img");
+	        selectedImage.draggable = false;
+	        
+	        const rect = wrapper.getBoundingClientRect();
+	        x_offset = event.clientX - rect.left;
+	        y_offset = event.clientY - rect.top;
+	        
+	        wrapperInitialX = rect.left;
+	        wrapperInitialY = rect.top;
+	    }
+	}, { passive: false });
 
 	document.addEventListener("mousemove", (event) => {
 	    if (!activeWrapper || !selectedImage) return;
@@ -1857,35 +1840,59 @@
 	    }
 
 	    if (isDragging && activeWrapper) {
-		    const transformState = transformStates.get(activeWrapper);
-		    if (!transformState) return;
-		    
-		    const deltaX = event.clientX - wrapperInitialX - x_offset;
-		    const deltaY = event.clientY - wrapperInitialY - y_offset;
-		    
-		    transformState.translateX += deltaX;
-		    transformState.translateY += deltaY;
+	        const deltaX = event.clientX - wrapperInitialX - x_offset;
+	        const deltaY = event.clientY - wrapperInitialY - y_offset;
+	        
+	        transformState.translateX += deltaX;
+	        transformState.translateY += deltaY;
 
-		    wrapperInitialX = event.clientX - x_offset;
-		    wrapperInitialY = event.clientY - y_offset;
-		}
+	        wrapperInitialX = event.clientX - x_offset;
+	        wrapperInitialY = event.clientY - y_offset;
+	    }
 
-    	activeWrapper.style.transform = `translate(${transformState.translateX}px, ${transformState.translateY}px) rotate(${transformState.rotateAngle}deg)`;
+	    activeWrapper.style.transform = `translate(${transformState.translateX}px, ${transformState.translateY}px) rotate(${transformState.rotateAngle}deg)`;
 
 	    if (resizeState.currentHandle && selectedImage) {
 	        doResize(event);
 	    }
-	}, { passive: true });
+
+	    if (cropState.currentHandle && selectedImage) {
+	        doCropResize(event);
+	    }
+	}, { passive: false });
 
 	document.addEventListener("mouseup", () => {
 	    isDragging = false;
 	    isRotating = false;
+	    resizeState.currentHandle = null;
+	    cropState.currentHandle = null;
+	}, { passive: false });
 
-	    if (resizeState.currentHandle) {
-	        resizeState.currentHandle = null;
+	function selectImage(image) {
+	    deselectAllImages();
+	    
+	    selectedImage = image;
+	    const wrapper = image.closest('.resizable') || wrapImage(selectedImage);
+	    selectWrapper(wrapper);
+	}
+
+	function selectWrapper(wrapper) {
+	    if (activeWrapper === wrapper) return;
+	    
+	    deselectAllImages();
+	    
+	    activeWrapper = wrapper;
+	    wrapper.classList.add('resizing');
+	    selectedImage = wrapper.querySelector('img');
+	    
+	    if (!wrapper.querySelector('.resize-handle')) {
+	        addResizeHandles(wrapper);
 	    }
-	}, { passive: true });
-	
+	    
+	    normalizeImageWrapper(wrapper);
+	    showToolbar('imageToolbar');
+	}
+
 	function normalizeImageWrapper(wrapper) {
 	    if (!transformStates.has(wrapper)) {
 	        wrapper.style.transform = 'translate(0px, 0px) rotate(0deg)';
@@ -1896,6 +1903,19 @@
 	        });
 	    }
 	    
+	    if (!cropStates.has(wrapper)) {
+	        const img = wrapper.querySelector('img');
+	        const rect = img.getBoundingClientRect();
+	        cropStates.set(wrapper, {
+	            active: false,
+	            x: 0,
+	            y: 0,
+	            width: rect.width,
+	            height: rect.height,
+	            originalClip: img.style.clipPath || ''
+	        });
+	    }
+	    
 	    return wrapper;
 	}
 
@@ -1903,12 +1923,7 @@
 	    const wrappers = document.querySelectorAll('.resizing');
 	    wrappers.forEach(wrapper => {
 	        wrapper.classList.remove('resizing');
-	        const handles = wrapper.querySelectorAll('.resize-handle');
-	        handles.forEach(handle => handle.remove());
-	        const rotateIcon = wrapper.querySelectorAll('.rotateIcon');
-	        rotateIcon.forEach(icon => icon.remove());
-	        const angleDisp = wrapper.querySelectorAll('.rotate-display');
-	        angleDisp.forEach(disp => disp.remove());
+	        removeResizeHandles(wrapper);
 	    });
 	    
 	    selectedImage = null;
@@ -1918,55 +1933,50 @@
 	function removeResizeHandles(wrapper) {
 	    if (!wrapper) return;
 	    
-	    wrapper.classList.remove('resizing');
-	    const handles = wrapper.querySelectorAll('.resize-handle');
-	    handles.forEach(handle => handle.remove());
-	    const rotateIcon = wrapper.querySelectorAll('.rotateIcon');
-	    rotateIcon.forEach(icon => icon.remove());
-	    const angleDisp = wrapper.querySelectorAll('.rotate-display');
-	    angleDisp.forEach(disp => disp.remove());
+	    const elements = wrapper.querySelectorAll('.resize-handle, .rotateIcon, .rotate-display');
+	    elements.forEach(el => el.remove());
 	}
 
 	function wrapImage(image) {
 	    if (image.parentElement.classList.contains('resizable')) {
-	        image.parentElement.classList.add('resizing');
-	        activeWrapper = normalizeImageWrapper(image.parentElement);
-	        addResizeHandles(activeWrapper);
-	        return activeWrapper;
+	        return image.parentElement;
 	    }
 	    
 	    const wrapper = document.createElement('div');
-	    wrapper.classList.add('resizable', 'resizing');
+	    wrapper.classList.add('resizable');
+	    wrapper.style.position = 'relative';
+	    wrapper.style.display = 'inline-block';
 	    image.parentNode.insertBefore(wrapper, image);
 	    wrapper.appendChild(image);
 	    
-	    activeWrapper = normalizeImageWrapper(wrapper);
-	    
-	    imageWrappers.add(activeWrapper);
-	    addResizeHandles(activeWrapper);
-	    return activeWrapper;
+	    imageWrappers.add(wrapper);
+	    return wrapper;
 	}
 
 	function addResizeHandles(wrapper) {
 	    const existingHandles = wrapper.querySelectorAll('.resize-handle, .rotateIcon, .rotate-display');
-	    existingHandles.forEach(handle => handle.remove());
+	    if (existingHandles.length > 0) return;
 	    
 	    const handles = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+	    
+	    const fragment = document.createDocumentFragment();
 	    
 	    handles.forEach(handle => {
 	        const handleDiv = document.createElement('div');
 	        handleDiv.classList.add('resize-handle', handle);
-	        wrapper.appendChild(handleDiv);
+	        fragment.appendChild(handleDiv);
 	    });
 	    
 	    const rotateIcon = document.createElement('div');
 	    rotateIcon.className = "rotateIcon";
 	    rotateIcon.title = "Drag to rotate image";
-	    wrapper.appendChild(rotateIcon);
+	    fragment.appendChild(rotateIcon);
 	    
 	    const rotateDisplay = document.createElement('div');
 	    rotateDisplay.className = "rotate-display";
-	    wrapper.appendChild(rotateDisplay);
+	    fragment.appendChild(rotateDisplay);
+	    
+	    wrapper.appendChild(fragment);
 	}
 
 	function initResize(event) {
@@ -1976,10 +1986,8 @@
 	    resizeState = {
 	        startX: event.clientX,
 	        startY: event.clientY,
-	        startWidth: parseInt(computedStyle.width, 10) || 0,
-	        startHeight: parseInt(computedStyle.height, 10) || 0,
-	        startLeft: parseInt(computedStyle.left, 10) || 0,
-	        startTop: parseInt(computedStyle.top, 10) || 0,
+	        startWidth: parseInt(computedStyle.width, 10) || selectedImage.offsetWidth,
+	        startHeight: parseInt(computedStyle.height, 10) || selectedImage.offsetHeight,
 	        currentHandle: resizeState.currentHandle
 	    };
 	}
@@ -1990,43 +1998,210 @@
 	    const deltaX = event.clientX - resizeState.startX;
 	    const deltaY = event.clientY - resizeState.startY;
 
+	    let newWidth, newHeight;
+
 	    switch (resizeState.currentHandle) {
 	        case 'top-left':
-	            activeWrapper.style.width = `${resizeState.startWidth - deltaX}px`;
-	            activeWrapper.style.height = `${resizeState.startHeight - deltaY}px`;
-	            activeWrapper.style.left = `${resizeState.startLeft + deltaX}px`;
-	            activeWrapper.style.top = `${resizeState.startTop + deltaY}px`;
-
-	            selectedImage.style.width = `${resizeState.startWidth - deltaX}px`;
-	            selectedImage.style.height = `${resizeState.startHeight - deltaY}px`;
+	            newWidth = Math.max(20, resizeState.startWidth - deltaX);
+	            newHeight = Math.max(20, resizeState.startHeight - deltaY);
 	            break;
-
 	        case 'top-right':
-	            activeWrapper.style.width = `${resizeState.startWidth + deltaX}px`;
-	            activeWrapper.style.height = `${resizeState.startHeight - deltaY}px`;
-	            activeWrapper.style.top = `${resizeState.startTop + deltaY}px`;
-
-	            selectedImage.style.width = `${resizeState.startWidth + deltaX}px`;
-	            selectedImage.style.height = `${resizeState.startHeight - deltaY}px`;
+	            newWidth = Math.max(20, resizeState.startWidth + deltaX);
+	            newHeight = Math.max(20, resizeState.startHeight - deltaY);
 	            break;
-
 	        case 'bottom-left':
-	            activeWrapper.style.width = `${resizeState.startWidth - deltaX}px`;
-	            activeWrapper.style.height = `${resizeState.startHeight + deltaY}px`;
-	            activeWrapper.style.left = `${resizeState.startLeft + deltaX}px`;
-
-	            selectedImage.style.width = `${resizeState.startWidth - deltaX}px`;
-	            selectedImage.style.height = `${resizeState.startHeight + deltaY}px`;
+	            newWidth = Math.max(20, resizeState.startWidth - deltaX);
+	            newHeight = Math.max(20, resizeState.startHeight + deltaY);
 	            break;
-
 	        case 'bottom-right':
-	            activeWrapper.style.width = `${resizeState.startWidth + deltaX}px`;
-	            activeWrapper.style.height = `${resizeState.startHeight + deltaY}px`;
-
-	            selectedImage.style.width = `${resizeState.startWidth + deltaX}px`;
-	            selectedImage.style.height = `${resizeState.startHeight + deltaY}px`;
+	            newWidth = Math.max(20, resizeState.startWidth + deltaX);
+	            newHeight = Math.max(20, resizeState.startHeight + deltaY);
 	            break;
 	    }
+
+	    selectedImage.style.width = `${newWidth}px`;
+	    selectedImage.style.height = `${newHeight}px`;
+	    
+	    const cropStateData = cropStates.get(activeWrapper);
+	    if (cropStateData && !cropStateData.active) {
+	        cropStateData.width = newWidth;
+	        cropStateData.height = newHeight;
+	    }
+	}
+
+	function toggleCrop() {
+	    if (!activeWrapper || !selectedImage) return;
+	    
+	    const cropStateData = cropStates.get(activeWrapper);
+	    if (!cropStateData) return;
+	    
+	    if (cropStateData.active) {
+	        exitCropMode();
+	    } else {
+	        enterCropMode();
+	    }
+	}
+
+	function enterCropMode() {
+	    if (!activeWrapper || !selectedImage) return;
+	    
+	    const cropStateData = cropStates.get(activeWrapper);
+	    if (!cropStateData) return;
+	    
+	    cropStateData.active = true;
+	    cropStateData.originalClip = selectedImage.style.clipPath || '';
+	    
+	    const imgRect = selectedImage.getBoundingClientRect();
+	    const wrapperRect = activeWrapper.getBoundingClientRect();
+	    
+	    if (cropStateData.width === 0 && cropStateData.height === 0) {
+	        cropStateData.width = imgRect.width;
+	        cropStateData.height = imgRect.height;
+	        cropStateData.x = 0;
+	        cropStateData.y = 0;
+	    }
+	    
+	    convertToCropHandles(activeWrapper);
+	    updateRotationDisplay(activeWrapper, "Crop Mode");
+	}
+
+	function exitCropMode() {
+	    if (!activeWrapper || !selectedImage) return;
+	    
+	    const cropStateData = cropStates.get(activeWrapper);
+	    if (!cropStateData) return;
+	    
+	    cropStateData.active = false;
+	    convertToResizeHandles(activeWrapper);
+	    updateRotationDisplay(activeWrapper, "Normal Mode");
+	}
+
+	function uncropImage() {
+	    if (!activeWrapper || !selectedImage) return;
+	    
+	    const cropStateData = cropStates.get(activeWrapper);
+	    if (!cropStateData) return;
+	    
+	    selectedImage.style.clipPath = "";
+	    
+	    const imgRect = selectedImage.getBoundingClientRect();
+	    cropStateData.x = 0;
+	    cropStateData.y = 0;
+	    cropStateData.width = imgRect.width;
+	    cropStateData.height = imgRect.height;
+	    
+	    updateRotationDisplay(activeWrapper, "Uncropped");
+	}
+
+	function convertToCropHandles(wrapper) {
+	    const handles = wrapper.querySelectorAll('.resize-handle');
+	    handles.forEach(handle => {
+	        handle.classList.add('crop-mode');
+	        handle.title = 'Drag to crop image';
+	    });
+	    
+	    const rotateIcon = wrapper.querySelector('.rotateIcon');
+	    if (rotateIcon) {
+	        rotateIcon.style.display = 'none';
+	    }
+	}
+
+	function convertToResizeHandles(wrapper) {
+	    const handles = wrapper.querySelectorAll('.resize-handle');
+	    handles.forEach(handle => {
+	        handle.classList.remove('crop-mode');
+	        handle.title = 'Drag to resize image';
+	    });
+	    
+	    const rotateIcon = wrapper.querySelector('.rotateIcon');
+	    if (rotateIcon) {
+	        rotateIcon.style.display = 'block';
+	    }
+	}
+
+	function updateCrop() {
+	    if (!activeWrapper || !selectedImage) return;
+	    
+	    const cropStateData = cropStates.get(activeWrapper);
+	    if (!cropStateData || !cropStateData.active) return;
+	    
+	    const img = selectedImage;
+	    const imgWidth = img.offsetWidth;
+	    const imgHeight = img.offsetHeight;
+	    
+	    const leftPercent = Math.max(0, Math.min(100, (cropStateData.x / imgWidth) * 100));
+	    const topPercent = Math.max(0, Math.min(100, (cropStateData.y / imgHeight) * 100));
+	    const rightPercent = Math.max(0, Math.min(100, ((cropStateData.x + cropStateData.width) / imgWidth) * 100));
+	    const bottomPercent = Math.max(0, Math.min(100, ((cropStateData.y + cropStateData.height) / imgHeight) * 100));
+	    
+	    const clipPath = `inset(${topPercent.toFixed(2)}% ${(100 - rightPercent).toFixed(2)}% ${(100 - bottomPercent).toFixed(2)}% ${leftPercent.toFixed(2)}%)`;
+	    selectedImage.style.clipPath = clipPath;
+	}
+
+	function initCropResize(event) {
+	    if (!selectedImage || !activeWrapper) return;
+	    
+	    const cropStateData = cropStates.get(activeWrapper);
+	    if (!cropStateData) return;
+	    
+	    cropState = {
+	        startX: event.clientX,
+	        startY: event.clientY,
+	        currentHandle: cropState.currentHandle,
+	        initialCrop: {
+	            x: cropStateData.x,
+	            y: cropStateData.y,
+	            width: cropStateData.width,
+	            height: cropStateData.height
+	        }
+	    };
+	}
+
+	function doCropResize(event) {
+	    if (!selectedImage || !activeWrapper || !cropState.initialCrop) return;
+	    
+	    const cropStateData = cropStates.get(activeWrapper);
+	    if (!cropStateData) return;
+	    
+	    const deltaX = event.clientX - cropState.startX;
+	    const deltaY = event.clientY - cropState.startY;
+	    
+	    const imgWidth = selectedImage.offsetWidth;
+	    const imgHeight = selectedImage.offsetHeight;
+	    
+	    const minSize = 20;
+	    
+	    switch (cropState.currentHandle) {
+	        case 'top-left':
+	            const newX1 = Math.max(0, Math.min(cropState.initialCrop.x + deltaX, cropState.initialCrop.x + cropState.initialCrop.width - minSize));
+	            const newY1 = Math.max(0, Math.min(cropState.initialCrop.y + deltaY, cropState.initialCrop.y + cropState.initialCrop.height - minSize));
+	            cropStateData.x = newX1;
+	            cropStateData.y = newY1;
+	            cropStateData.width = cropState.initialCrop.width - (newX1 - cropState.initialCrop.x);
+	            cropStateData.height = cropState.initialCrop.height - (newY1 - cropState.initialCrop.y);
+	            break;
+	            
+	        case 'top-right':
+	            const newY2 = Math.max(0, Math.min(cropState.initialCrop.y + deltaY, cropState.initialCrop.y + cropState.initialCrop.height - minSize));
+	            cropStateData.y = newY2;
+	            cropStateData.width = Math.max(minSize, Math.min(cropState.initialCrop.width + deltaX, imgWidth - cropStateData.x));
+	            cropStateData.height = cropState.initialCrop.height - (newY2 - cropState.initialCrop.y);
+	            break;
+	            
+	        case 'bottom-left':
+	            const newX3 = Math.max(0, Math.min(cropState.initialCrop.x + deltaX, cropState.initialCrop.x + cropState.initialCrop.width - minSize));
+	            cropStateData.x = newX3;
+	            cropStateData.width = cropState.initialCrop.width - (newX3 - cropState.initialCrop.x);
+	            cropStateData.height = Math.max(minSize, Math.min(cropState.initialCrop.height + deltaY, imgHeight - cropStateData.y));
+	            break;
+	            
+	        case 'bottom-right':
+	            cropStateData.width = Math.max(minSize, Math.min(cropState.initialCrop.width + deltaX, imgWidth - cropStateData.x));
+	            cropStateData.height = Math.max(minSize, Math.min(cropState.initialCrop.height + deltaY, imgHeight - cropStateData.y));
+	            break;
+	    }
+	    
+	    updateCrop();
 	}
 
 	function layerUp() {
@@ -2034,7 +2209,7 @@
 
 	    const currentZ = parseInt(activeWrapper.style.zIndex, 10) || 0;
 	    activeWrapper.style.zIndex = currentZ + 1;
-	    updateRotationDisplay(activeWrapper, "Layer " + (Number(activeWrapper.style.zIndex) + 1));
+	    updateRotationDisplay(activeWrapper, "Layer " + (currentZ + 2));
 	}
 
 	function layerDown() {
@@ -2043,11 +2218,9 @@
 	    const currentZ = parseInt(activeWrapper.style.zIndex, 10) || 0;
 	    if (currentZ > 0) {
 	        activeWrapper.style.zIndex = currentZ - 1;
+	        updateRotationDisplay(activeWrapper, "Layer " + currentZ);
 	    }
-	    updateRotationDisplay(activeWrapper, "Layer " + (Number(activeWrapper.style.zIndex) + 1));
 	}
-
-	let hide_timeout;
 
 	function updateRotationDisplay(wrapper, text) {
 	    const display = wrapper.querySelector('.rotate-display');
@@ -2056,36 +2229,83 @@
 	        display.style.display = 'block';
 	        display.textContent = text;
 
-	        clearTimeout(hide_timeout);
+	        clearTimeout(hideTimeout);
 
-	        hide_timeout = setTimeout(() => {
+	        hideTimeout = setTimeout(() => {
 	            display.style.display = 'none';
-	        }, 1000);
+	        }, 2000);
 	    }
 	}
+
+	const imageManipulationStyles = `
+	.resizable {
+	    position: relative;
+	    display: inline-block;
+	    border: 1px dashed transparent;
+	}
+
+	.crop-overlay {
+	    position: absolute;
+	    border: 2px dashed #007bff;
+	    background: rgba(0, 123, 255, 0.1);
+	    pointer-events: none;
+	    z-index: 999;
+	}
+	`;
 	
 	document.addEventListener('paste', async (event) => {
-		setTimeout(() => highlightCode(), 5);
-		
+	    event.preventDefault();
+	    setTimeout(() => highlightCode(), 5);
+	    
 	    const items = event.clipboardData.items;
+	    
 	    for (let item of items) {
 	        if (item.type.startsWith('image/')) {
-	            event.preventDefault();
 	            const file = item.getAsFile();
 	            const base64Data = await convertImageToBase64(URL.createObjectURL(file));
-
 	            const selection = window.getSelection();
 	            if (selection.rangeCount > 0) {
 	                const range = selection.getRangeAt(0);
 	                const imgElement = document.createElement('img');
 	                imgElement.src = base64Data;
 	                range.insertNode(imgElement);
-
 	                range.setStartAfter(imgElement);
 	                range.setEndAfter(imgElement);
 	                selection.removeAllRanges();
 	                selection.addRange(range);
 	            }
+	            return;
+	        }
+	    }
+	    
+	    const text = event.clipboardData.getData('text/plain');
+	    if (text) {
+	        const selection = window.getSelection();
+	        if (selection.rangeCount > 0) {
+	            const range = selection.getRangeAt(0);
+	            
+	            const lines = text.split('\n');
+	            const fragment = document.createDocumentFragment();
+	            
+	            lines.forEach((line, index) => {
+	                if (index > 0) {
+	                    fragment.appendChild(document.createElement('br'));
+	                }
+	                if (line.trim() !== '') {
+	                    fragment.appendChild(document.createTextNode(line));
+	                } else {
+	                    fragment.appendChild(document.createTextNode('\u00A0'));
+	                    if (index < lines.length - 1) {
+	                        fragment.appendChild(document.createElement('br'));
+	                    }
+	                }
+	            });
+	            
+	            range.insertNode(fragment);
+	            range.setStartAfter(fragment.lastChild);
+	            range.setEndAfter(fragment.lastChild);
+	            selection.removeAllRanges();
+	            selection.addRange(range);
 	        }
 	    }
 	});
@@ -2827,6 +3047,12 @@
 			}
 	        return content;
 	    } catch (e) {
+	    	if (e instanceof SyntaxError && e.message === "Unexpected end of JSON input") {
+	    		hideModal();
+	    		alert("File Error", `File could not be read  <span class="info" title="Learn More"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAW0lEQVR4nO2USwrAMAgF53hJ73+CepCXTbqNJBJsaQZc+RlQEA6TXIABWgwD6kgQGa4e90jwFK0irz9doGA+X+DxfoE+fwMdgbJX5JEvsN3vuvaCyPAS2AA/pAGbZYu18rtkjAAAAABJRU5ErkJggg==" style="top: 4px;" alt="info">Learn More</span>`);
+	    		return;
+	    	}
+	    	
 	        log("Caught " + e);
 	        const encryptedData = lightweightEncrypt(cont);
 	        return { 
@@ -2895,6 +3121,7 @@
 	            const githubData = await response.json();
 	            fileContent = await decodeFromBase64(githubData.content);
 	            fileData = parseFileContent(fileContent);
+	            if (!fileData) return;
 	            sha = githubData.sha;
 
 	            if (fileData.marker === FILE_MARKERS.ENCRYPTED_V2) {
