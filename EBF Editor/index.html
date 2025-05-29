@@ -301,7 +301,7 @@
 	        
 	        <div id="version">
 	        	<h3>Version</h3>
-	        	<p class="p2"> - 17.1</p>
+	        	<p class="p2"> - 17.4</p>
 	        </div>
 
 	        <div class="center">
@@ -378,7 +378,8 @@
 	</div>
 	
 	<div class="toolbar hide" id="imageToolbar" role="toolbar" aria-label="Image editing tools" title="Image editing">
-		<button title="Crop Image - placeholder">Crop</button>
+		<button title="Crop Image" onclick="toggleCrop()">Crop</button>
+		<button title="Uncrop Image" onclick="uncropImage()">Uncrop</button>
 		<button onclick="layerUp()" title="Bring image up">Layer up</button>
 		<button onclick="layerDown()" title="Bring image down">Layer down</button>
 	</div>
@@ -440,7 +441,8 @@
 	</div>
 	  
 	<input type="file" id="fileInput" accept=".ebf" style="display:none">
-	    
+	
+	<script src="ebf-log.js" defer></script>	    
 <script src="ebf-script.js"></script>
 </body>
 </html>
