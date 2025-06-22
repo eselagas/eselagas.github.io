@@ -301,7 +301,7 @@
 	        
 	        <div id="version">
 	        	<h3>Version</h3>
-	        	<p class="p2"> - 17.4</p>
+	        	<p class="p2" id="Version"> - 18.0</p>
 	        </div>
 
 	        <div class="center">
@@ -313,7 +313,6 @@
 
 	<div id="edContainer">
 		<div id="editorBG" contenteditable="false"></div>
-		<canvas id="drawingCanvas" role="img" aria-label="Drawing canvas" title="Drawing canvas" width="calc(100% - 40px)" height="calc(100% - 160px)"></canvas>
 		<div id="editor" contenteditable="true" role="textbox" aria-label="Content editor"></div>
 	</div>
 	
@@ -321,8 +320,8 @@
 	  <button onmousedown="bold()" aria-label="Make text bold" id="bold" title="Bold"><b>B</b></button>
 	  <button onmousedown="italic()" aria-label="Make text italic" id="italic" title="Italic"><i>I</i></button>
 	  <button onmousedown="underline()" aria-label="Make text underlined" id="underline" title="Underline"><u>U</u></button>
-	  <button onmousedown="changeFontSize(false)" aria-label="Decrease font size" title="Decrease font size">A-</button>
-	  <button onmousedown="changeFontSize(true)" aria-label="Increase font size" title="Increase font size">A+</button>
+	  <button onmousedown="changeFontSize(false)" aria-label="Decrease font size" title="Font size down (ctrl + -)">A-</button>
+	  <button onmousedown="changeFontSize(true)" aria-label="Increase font size" title="Font size up (ctrl + =)">A+</button>
 	  <button onclick="execCmd('insertUnorderedList')" aria-label="Insert dot point list" title="Insert Dot point List">UL</button>
 	  <button onclick="execCmd('insertOrderedList')" aria-label="Insert numbered list" title="Insert Numbered List">OL</button>
 	</div>
@@ -369,17 +368,19 @@
 	<div class="toolbar hide" id="drawingToolbar" role="toolbar" aria-label="Drawing tools" title="Drawing tools">
 	    <button onclick="selectPenColor()" aria-label="Select pen tool" title="Select pen tool">Pen</button>
 	    <button onclick="selectHighlighter()" aria-label="Select highlighter tool" title="Select highlighter tool">Highlighter</button>
-	    <button onclick="selectEraser()" aria-label="Select eraser tool" title="Select eraser tool">Eraser</button>
 	    <input type="color" id="penColor" value="#000000" aria-label="Select color" title="Select color">
-	    <button onclick="setInkThickness(1)" aria-label="Set thin line width" title="Set thin line width">Thin</button>
-	    <button onclick="setInkThickness(5)" aria-label="Set medium line width" title="Set medium line width">Medium</button>
-	    <button onclick="setInkThickness(10)" aria-label="Set thick line width" title="Set thick line width">Thick</button>
+	    <button onclick="setInkThickness(1)" aria-label="Set thin line width" title="Set thin line width">Super Thin</button>
+	    <button onclick="setInkThickness(5)" aria-label="Set thin line width" title="Set thin line width">Thin</button>
+	    <button onclick="setInkThickness(10)" aria-label="Set medium line width" title="Set medium line width">Medium</button>
+	    <button onclick="setInkThickness(20)" aria-label="Set thick line width" title="Set thick line width">Thick</button>
+	    <button onclick="setInkThickness(45)" aria-label="Set thick line width" title="Set thick line width">Extra Thick</button>
 	    <button onclick="saveAndHideDrawingToolbar()" aria-label="Save drawings and exit" title="Save and exit">Done</button>
 	</div>
 	
 	<div class="toolbar hide" id="imageToolbar" role="toolbar" aria-label="Image editing tools" title="Image editing">
-		<button title="Crop Image" onclick="toggleCrop()">Crop</button>
-		<button title="Uncrop Image" onclick="uncropImage()">Uncrop</button>
+		<button title="Crop Image" id="cropBtn" onclick="toggleCrop()">Crop</button>
+		<button class="hide" title="Uncrop Image" id="uncrop" onclick="uncropImage()">Uncrop</button>
+		<button class="hide" title="Reset Image Rotation to 0" id="rotateReset" onclick="resetRotation()">Reset Rotation</button>
 		<button onclick="layerUp()" title="Bring image up">Layer up</button>
 		<button onclick="layerDown()" title="Bring image down">Layer down</button>
 	</div>
@@ -436,8 +437,17 @@
 	</div>
 
 	<div id="alert" class="modal" style="display: none;" title="Alert">
-		<h3 id="alert-msg"></h3>
+		<h3 id="alert-msg" class="_msg center"></h3>
 		<button id="ok" title="OK">OK</button>
+	</div>
+	
+	<div class="modal-overlay" id="suggestModal" onclick="hideModal()" style="display: none;">
+		<div id="suggest" class="modal" style="display: flex;" title="Suggestion">
+			<h3 id="suggestion" class="_msg center">- NULL -</h3>
+			<h5 id="prompt-suggestion" class="_msg">Click "OK" or "No"</h5>
+			<button class="promptBtn" style="background: green" id="yes" title="Yes">OK</button>
+			<button class="promptBtn" style="background: var(--danger-color)" id="no" title="No">No</button>
+		</div>
 	</div>
 	  
 	<input type="file" id="fileInput" accept=".ebf" style="display:none">
