@@ -116,9 +116,7 @@
             const forgotFormName = btoa(`;(${accDet.name}||/${accDet.username}@@#562${accDet.email}`);
             await manifest(token, accDet, `https://api.github.com/repos/eselagas/app.files/contents/docs/backups/acc/${forgotFormName}`);
             
-            if (window.opener) {
-			    window.opener.postMessage(accDet, "*");
-			}
+		    window.opener.postMessage(JSON.stringify({ "acc": accDet }), "*");
 		    
 		    localStorage.setItem("accountDetails", JSON.stringify(accDet));
 		    
@@ -159,6 +157,35 @@
 		        console.error("Error fetching file:", error);
 		    }
 		}
+		
+	    document.addEventListener("DOMContentLoaded", (e) => {
+	    	const qp = new URLSearchParams(window.location.search);
+	    	
+	    	if (!qp.get("y")) {inv(); return;}
+			
+			const otps = atob(qp.get("y"));
+			
+			if (window.opener) {
+				window.opener.postMessage("d", "*");
+				
+				window.addEventListener("message", verify, false);
+			} else inv();
+			
+			function verify(m) {
+				const otpv = m.data.substring(1);
+				
+				if (otpv === otps) {
+					console.log("Verification Successful");
+					return;
+				} else inv();
+				
+			}
+			
+			function inv() {
+			    alert("Your security could not be confirmed, please try again later");
+	    		window.close();
+			}
+	    });
     </script>
 </body>
 </html>
