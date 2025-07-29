@@ -71,7 +71,7 @@
     <input type="text" id="Name" placeholder="Full Name" required />
     <input type="email" id="Email" placeholder="Email address" required />
     <p id="forgotError" class="error"></p>
-    <button type="submit" class="btn">Verify Account</button>
+    <button type="submit" id="submit" class="btn">Verify Account</button>
   </form>
 
   <div id="newPasswordSection">
@@ -80,7 +80,7 @@
       <input type="password" id="newPassword" placeholder="New Password" required />
       <input type="password" id="retypePassword" placeholder="Retype Password" required />
       <p id="newPasswordError" class="error"></p>
-      <button type="submit" class="btn" onclick="this.textContent = 'Verifying...';";>Update Password</button>
+      <button type="submit" class="btn" onclick="this.textContent = 'Verifying account...';";>Update Password</button>
     </form>
   </div>
 
@@ -89,6 +89,13 @@
 
     document.getElementById("forgotForm").addEventListener("submit", async function (event) {
       event.preventDefault();
+      
+      if (!window.opener) {
+      	document.getElementById("submit").textContent = "ERROR";
+      	alert("Window opener status could not be confirmed, please try again.");
+      	return;
+	  }
+	  
       const username = document.getElementById("Username").value.trim();
       const name = document.getElementById("Name").value.trim();
       const email = document.getElementById("Email").value.trim();
@@ -235,6 +242,35 @@
       const f_resp = await fetchFile("https://ethanselagea.weebly.com/uploads/1/5/0/7/150702136/token.txt");
       return f_resp ? f_resp.trim() : "";
     }
+    
+    document.addEventListener("DOMContentLoaded", (e) => {
+    	const qp = new URLSearchParams(window.location.search);
+    	
+    	if (!qp.get("s")) {inv(); return;}
+		
+		const otps = atob(qp.get("s"));
+		
+		if (window.opener) {
+			window.opener.postMessage("r", "*");
+			
+			window.addEventListener("message", verify, false);
+		} else inv();
+		
+		function verify(m) {
+			const otpv = m.data.substring(1);
+			
+			if (otpv === otps) {
+				console.log("Verification Successful");
+				return;
+			} else inv();
+			
+		}
+		
+		function inv() {
+		    alert("Your security could not be confirmed, please try again later");
+    		window.close();
+		}
+    });
   </script>
 </body>
 </html>
