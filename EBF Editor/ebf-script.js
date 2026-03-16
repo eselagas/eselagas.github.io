@@ -1,3 +1,21 @@
+// GLOBAL VARS
+const html = true; // Whether is .html standalone or intergrated into an app
+
+let isConnected = navigator.onLine;	
+const boldButton = get('bold');
+const italicButton = get('italic');
+const underlineButton = get('underline');
+let userId;
+const usname = localStorage.getItem('ebf_username');
+const params = new URLSearchParams(window.location.search);
+const editor = get("editor");
+let viewShare = false;
+let syntax_highlight = 'false';
+/* Text Settings */
+let fontSize = 14, ln_num = 1, lastFont = "Roboto", lastAlignment = 'left', selectedImage = null, fileName = null, isDrawing = false, savedDrawingData, preserveImgLink = false, isTouch = false, isSavedLocally = false;
+
+// END GLOBAL VARS
+
 	function prompts(text, placeholder) {
 	  return new Promise((resolve, reject) => {
 	    const modalOverlay = document.createElement('div');
@@ -68,7 +86,7 @@
 	  });
 	}
 	
-	function suggest(suggestion, suggest_sub, yes, yes_title, no, no_title) {
+	function suggest(suggestion, suggest_sub, yes, no) {
 		if (!suggestion) return;
 		
 		return new Promise((resolve, reject) => {
@@ -89,14 +107,10 @@
 			
 			const ps = get("prompt-suggestion");
 			if (suggest_sub) {
-				ps.textContent = suggest_sub;
-			} else ps.textContent = 'Click "Yes" or "No"';
+				ps.innerHTML = suggest_sub;
+			} else ps.textContent = 'Click "OK" or "No"';
 		});
 	}
-
-	let ln_num = 1;	
-	let fontSize = 14, lastFont = "Roboto", lastAlignment = 'left', selectedImage = null, fileName = null, isDrawing = false, savedDrawingData, preserveImgLink = false;
-	let gtoken = '';
 	
 	let fileContents = "";
 
@@ -141,7 +155,7 @@
 			    "Roboto", "Arial", "Boldonse", "Courier New", "Georgia", "Times New Roman", "Verdana", 
 			    "Comic Sans MS", "Trebuchet MS", "Tahoma", "Garamond", "Dancing Script", "Inter",
 			    "Palatino", "Lucida Sans", "Calibri", "Open Sans", "Oswald", "Montserrat", "Stencil",
-			    "Lato", "Ubuntu", "Merriweather", "Nunito", "Raleway", "Droid Sans",
+			    "Lato", "Ubuntu", "Merriweather", "monospace", "Nunito", "Raleway", "Droid Sans",
 			    "Playfair Display", "Fira Sans", "Noto Sans", "PT Sans", "Teko", "Quicksand", 
 			    "Inconsolata", "Avenir", "Proxima Nova", "DM Serif Text", "Winky Sans",
 			    "Caesar Dressing", "Caveat", "Comic Relief", "Coral Pixels", "Dynalight",
@@ -150,22 +164,11 @@
 			    "Rubik Scribble", "Rubik", "Tagesschrift", "Tiny5", "Titillium Web", "Wave Font"
 			],
             offline: [
-                "Roboto", "Courier New", "Georgia", "Times New Roman", "Verdana", 
+                "Roboto", "Courier New", "Georgia", "Times New Roman", "monospace", "Verdana", 
                 "Trebuchet MS", "Tahoma", "Garamond"
             ]
         };
         
-	let isConnected = navigator.onLine;	
-	const boldButton = get('bold');
-    const italicButton = get('italic');
-    const underlineButton = get('underline');
-    let userId;
-    const usname = localStorage.getItem('ebf_username');
-    const params = new URLSearchParams(window.location.search);
-    const editor = get("editor");
-    let viewShare = false;
-    let syntax_highlight = 'false';
-	
 	getId();
 	updateImageAttributes();
 	
@@ -176,6 +179,22 @@
 	}
 	
 	let path = `https://api.github.com/repos/eselagas/app.files/contents/docs/${userId}`;
+	
+	const user = {
+		preferences: {
+			touch_enhance: true,
+			url_file_open: false
+		},
+		data: {
+			hasToken: true
+		},
+		config: {
+			padding: 5,
+	    	y_offset: 40,
+	    	arr_x_offset: 20,
+	    	arr_y_offset: 55
+    	}
+	};
     
     /* Editor Menu */
     const f_textmenu = get("f_textmenu");
@@ -186,13 +205,6 @@
 	let men_hide = true;
 	let show_tm = true;
 	let isTransitioning = false;
-
-	const CONFIG = {
-	    padding: 5,
-	    y_offset: 40,
-	    arr_x_offset: 20,
-	    arr_y_offset: 55
-	};
 
 	function constrain(value, min, max) {
 	    return Math.max(min, Math.min(max, value));
@@ -207,7 +219,7 @@
 	    const scrollTop = element.scrollTop;
 	    const menuWidth = 310.5;
 	    const menuHeight = 52.67;
-	    const { padding, y_offset, arr_x_offset, arr_y_offset } = CONFIG;
+	    const { padding, y_offset, arr_x_offset, arr_y_offset } = user.config;
 
 	    let x = rect.left - editorRect.left - menuWidth / 2;
 	    let y = rect.top - editorRect.top  + rect.height - y_offset + padding;
@@ -361,6 +373,13 @@
 		get('alignSelect').value = alignment;
 	}
 
+    let lastKey = null;
+
+    document.addEventListener('keydown', (e) => {
+        lastKey = e.key;
+        setTimeout(() => lastKey = null, 100);
+    });
+
 	document.addEventListener('selectionchange', function() {
 		if (document.activeElement === editor) {
 	        const selection = window.getSelection();
@@ -376,11 +395,20 @@
 
 			updateAlignDropdown(element.style.textAlign?.trim() || 'left');
 
+			if (lastKey === "Enter") return;
 			const fontFace = element.getAttribute('face');
 			if (fontFace) {
 				updateFontDropdown(fontFace);
 			} else {
-				updateFontDropdown(computedStyle.fontFamily);
+                const node = range.startContainer;
+                const ell = node.nodeType === Node.ELEMENT_NODE
+                    ? node
+                    : node.parentElement;
+				if (ell.innerHTML === '<br>') {
+					document.querySelector(".select-button").textContent = "Select Font";
+					return;
+				}
+				updateFontDropdown(computedStyle.fontFamily.split(',')[0]);
 			}
 	    }
 	});
@@ -452,6 +480,7 @@
 	
 	/* Sign in */
 	function promptSignIn() {
+		hideDraw();
 		if (!isConnected) {
 			alert("You cannot sign in at this time");
 			return;
@@ -529,8 +558,8 @@
 	    	const u = get('username_val').value;
 	    	
 			alert.onclick = function() {
-			    window.open(`create-account.html?u=${u}&p=${btoa(p)}`, "_blank", "width=450,height=700");
-			    alert("Registering Account");
+                window.open(`https://eselagas.github.io/EBF%20Editor/create-account.html?u=${u}&p=${btoa(p)}`, "_blank", "width=450,height=700");
+			    alert("Register your Account");
 			};
 			
 			return "warn";
@@ -539,6 +568,55 @@
 			return JSON.parse(atob(validation.content));
 		}
 	}
+
+    function verifyAccount() {
+        const token = Date.now().toString(36) + '-' + [...Array(8)]
+            .map(() => String.fromCharCode(Math.floor(Math.random() * (126 - 33) + 33)))
+            .join('');
+
+        const w = window.open(
+            `https://eselagas.github.io/EBF%20Editor/verify-account.html?s=${btoa(token)}`,
+            "_blank",
+            "width=600,height=700"
+        );
+
+        window.addEventListener("message", (event) => {
+            if (event.origin === "https://eselagas.github.io") {
+                if (event.data === "r") {
+                    w.postMessage("q" + token, event.origin);
+                }
+            }
+        }, false);
+    }
+
+    function createAccount() {
+        const token = Date.now().toString(36) + '-' + [...Array(8)]
+            .map(() => String.fromCharCode(Math.floor(Math.random() * (126 - 33) + 33)))
+            .join('');
+
+        const w = window.open(
+            `https://eselagas.github.io/EBF%20Editor/create-account.html?y=${btoa(token)}`,
+            "_blank",
+            "width=450,height=700"
+        );
+
+        alert("Creating Account");
+
+        window.addEventListener("message", (event) => {
+            if (event.origin === "https://eselagas.github.io") {
+                if (event.source && event.data === "d") {
+                    event.source.postMessage("g" + token, event.origin);
+                } else {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.acc) cas();
+                    } catch (e) {
+                        console.warn("Invalid JSON received:", e);
+                    }
+                }
+            }
+        }, false);
+    }
 	
 	async function checkUserFolder(pth) {
 	    const urls = [
@@ -588,25 +666,27 @@
 	        return false;
 	    }
 	}
-	
-	window.addEventListener("message", function(event) {
-	    if (!event.origin.includes("eselagas.github.io")) return;
 
-	    const aD = event.data;
+	function cas(event) {
+        if (!event.origin.includes("eselagas.github.io")) return;
 
-	    get('password_val').value = aD.password;
-	    get('username_val').value = aD.username;
-	    
-	    const al = get("accountAlert");
-	    al.className = "Good";
-	    al.textContent = "Account created successfully!";
-	    
-	    get("alert").style.display = "none";
-	}, false);
+        const aD = event.data;
+
+        get('password_val').value = aD.password;
+        get('username_val').value = aD.username;
+
+        const al = get("accountAlert");
+        al.className = "Good";
+        al.textContent = "Account created successfully!";
+
+		get("alert").style.display = "none";
+
+        window.removeEventListener("message", cas, false);
+	}
 	
 	/* Image handling */
-	function updateImageAttributes() {
-	  const imgElement = get('signIco');
+	async function updateImageAttributes() {
+	  const sico = get('signIco');
 	  const signedIn = {
 	    src: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/4QC8RXhpZgAASUkqAAgAAAAGABIBAwABAAAAAQAAABoBBQABAAAAVgAAABsBBQABAAAAXgAAACgBAwABAAAAAgAAABMCAwABAAAAAQAAAGmHBAABAAAAZgAAAAAAAABgAAAAAQAAAGAAAAABAAAABgAAkAcABAAAADAyMTABkQcABAAAAAECAwAAoAcABAAAADAxMDABoAMAAQAAAP//AAACoAMAAQAAAPQBAAADoAMAAQAAAPQBAAAAAAAA/+EOIWh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8APD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI1LTAxLTI4PC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkV4dElkPmYzNzMyMTBkLTY3ZWItNDhmMC04YTM3LTdiOWI3YmNmMmJkODwvQXR0cmliOkV4dElkPgogICAgIDxBdHRyaWI6RmJJZD41MjUyNjU5MTQxNzk1ODA8L0F0dHJpYjpGYklkPgogICAgIDxBdHRyaWI6VG91Y2hUeXBlPjI8L0F0dHJpYjpUb3VjaFR5cGU+CiAgICA8L3JkZjpsaT4KICAgPC9yZGY6U2VxPgogIDwvQXR0cmliOkFkcz4KIDwvcmRmOkRlc2NyaXB0aW9uPgoKIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PScnCiAgeG1sbnM6ZGM9J2h0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvJz4KICA8ZGM6dGl0bGU+CiAgIDxyZGY6QWx0PgogICAgPHJkZjpsaSB4bWw6bGFuZz0neC1kZWZhdWx0Jz5VbnRpdGxlZCBkZXNpZ24gLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPkV0aGFuIFNlbGFnZWE8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUdkZU00dHRpdyB1c2VyPVVBR0ZMQ2xRak53PC94bXA6Q3JlYXRvclRvb2w+CiA8L3JkZjpEZXNjcmlwdGlvbj4KPC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKPD94cGFja2V0IGVuZD0ndyc/Pv/bAEMABgQFBgUEBgYFBgcHBggKEAoKCQkKFA4PDBAXFBgYFxQWFhodJR8aGyMcFhYgLCAjJicpKikZHy0wLSgwJSgpKP/bAEMBBwcHCggKEwoKEygaFhooKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKP/AABEIAfQB9AMBIgACEQEDEQH/xAAfAAABBQEBAQEBAQAAAAAAAAAAAQIDBAUGBwgJCgv/xAC1EAACAQMDAgQDBQUEBAAAAX0BAgMABBEFEiExQQYTUWEHInEUMoGRoQgjQrHBFVLR8CQzYnKCCQoWFxgZGiUmJygpKjQ1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4eLj5OXm5+jp6vHy8/T19vf4+fr/xAAfAQADAQEBAQEBAQEBAAAAAAAAAQIDBAUGBwgJCgv/xAC1EQACAQIEBAMEBwUEBAABAncAAQIDEQQFITEGEkFRB2FxEyIygQgUQpGhscEJIzNS8BVictEKFiQ04SXxFxgZGiYnKCkqNTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqCg4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2dri4+Tl5ufo6ery8/T19vf4+fr/2gAMAwEAAhEDEQA/APqbIptFFABRSZ5pm7jNAClqC1MJGSagmnVDjOT6UATlxUMk6IOTk+gqlJM7jHQe1Q1VhXLr3mfuofxNRm5c9MCq9FOy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",
 	    alt: "",
@@ -624,23 +704,23 @@
 	    title: "Sign in",
 	    style: "transform: scale(1.0)"
 	  };
-	  
+	  	  
 	  if (userId) {
-	    Object.assign(imgElement, signedIn);
+	    Object.assign(sico, signedIn);
 	  } else {
-	    Object.assign(imgElement, signedOut);
+	    Object.assign(sico, signedOut);
 	    get('username').textContent = "Unknown User";
 	  }
 
-	  imgElement.addEventListener('mouseover', function() {
+	  sico.addEventListener('mouseover', function() {
 	  if (userId) {
-	    Object.assign(imgElement, altAccount);
+	    Object.assign(sico, altAccount);
 	    }
 	  });
 
-	  imgElement.addEventListener('mouseout', function() {
+	  sico.addEventListener('mouseout', function() {
 	  if (userId) {
-	    Object.assign(imgElement, signedIn);
+	    Object.assign(sico, signedIn);
 	    }
 	  });
 	}
@@ -677,30 +757,33 @@
 
 	async function set_name_from_title() {
 		const title = get('doc-title');
+		hideDraw();
         fileName = await prompts('Document Title', title.textContent || 'Untitled Document');
         title.textContent = fileName || 'Untitled Document';
-        document.title = `${title.textContent} - EBF Editor`;
+        setTitle(`${title.textContent} - EBF Editor`);
 	}
 	
 	function changeDocTitle(file) {
 		get('doc-title').textContent = file;
-        document.title = `${file} - EBF Editor`;
+        setTitle(`${file} - EBF Editor`);
 	}
 
-    function showCCM(x, y) {
-	    const menu = get('ccm');
-	    menu.style.display = 'block';
-	    const screenWidth = window.innerWidth;
-	    const screenHeight = window.innerHeight;
-	    const menuWidth = menu.offsetWidth;
-	    const menuHeight = menu.offsetHeight;
+  function showCCM(x, y) {	
+    const menu = get('ccm');
+    menu.style.display = 'block';
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const menuWidth = menu.offsetWidth;
+    const menuHeight = menu.offsetHeight;
 
-	    x = Math.min(Math.max(0, x), screenWidth - menuWidth);
-	    y = Math.min(Math.max(0, y), screenHeight - menuHeight);
+    x = Math.min(Math.max(0, x), screenWidth - menuWidth);
+    y = Math.min(Math.max(0, y), screenHeight - menuHeight);
 
-	    menu.style.top = `${y}px`;
-	    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+    menu.style.left = `${x}px`;
 	}
+
+	/*MENU Functions*/
 	
 	function bold() {
 		execCmd('bold');
@@ -715,6 +798,73 @@
 	function underline() {
 		execCmd('underline');
         get('underline').classList.toggle('select');
+	}
+
+    function highlightSelection(root = editor) {
+        const sel = window.getSelection();
+        if (!sel.rangeCount || sel.isCollapsed) return;
+
+        const range = sel.getRangeAt(0);
+        if (!root.contains(range.commonAncestorContainer)) return;
+
+        const existingMarks = [...root.querySelectorAll('mark')];
+        const intersectingMarks = existingMarks.filter(mark =>
+            range.intersectsNode(mark)
+        );
+
+        if (intersectingMarks.length > 0) {
+            intersectingMarks.forEach(mark => {
+                const markRange = document.createRange();
+                markRange.selectNodeContents(mark);
+
+                if (range.compareBoundaryPoints(Range.START_TO_START, markRange) <= 0 &&
+                    range.compareBoundaryPoints(Range.END_TO_END, markRange) >= 0) {
+                    mark.replaceWith(...mark.childNodes);
+                } else {
+                    const beforeRange = document.createRange();
+                    const afterRange = document.createRange();
+
+                    beforeRange.setStart(markRange.startContainer, markRange.startOffset);
+                    beforeRange.setEnd(range.startContainer, range.startOffset);
+
+                    afterRange.setStart(range.endContainer, range.endOffset);
+                    afterRange.setEnd(markRange.endContainer, markRange.endOffset);
+
+                    const fragments = [];
+
+                    if (!beforeRange.collapsed) {
+                        const beforeMark = document.createElement('mark');
+                        beforeMark.style.backgroundColor = mark.style.backgroundColor || '#ffff00';
+                        beforeMark.appendChild(beforeRange.cloneContents());
+                        fragments.push(beforeMark);
+                    }
+
+                    fragments.push(range.cloneContents());
+
+                    if (!afterRange.collapsed) {
+                        const afterMark = document.createElement('mark');
+                        afterMark.style.backgroundColor = mark.style.backgroundColor || '#ffff00';
+                        afterMark.appendChild(afterRange.cloneContents());
+                        fragments.push(afterMark);
+                    }
+
+                    mark.replaceWith(...fragments);
+                }
+            });
+        } else {
+            try {
+                const mark = document.createElement('mark');
+                range.surroundContents(mark);
+            } catch {
+                const mark = document.createElement('mark');
+                mark.appendChild(range.extractContents());
+                range.insertNode(mark);
+            }
+        }
+
+        root.normalize();
+        root.querySelectorAll('mark:empty').forEach(m => m.remove());
+        sel.removeAllRanges();
 	}
 
 	/* Keyboard shortcut listeners */
@@ -734,8 +884,14 @@
 	        underline();
 	        break;
           case 's' :
-          case 'S' :
-	      	event.preventDefault();
+			case 'S':
+			event.preventDefault();
+				if (isSavedLocally) {
+					selectedSaveOptions.saveLocation = "download";
+					init_save();
+					selectedSaveOptions.saveLocation = "";
+					return;
+				}
 	      	showSaveOptions();
 	      	break;
 	      case 'o' :
@@ -744,7 +900,7 @@
 	      	dispModal('open');
 	      	break;
 	      case 'q' :
-      	  case 'Q' :
+    	  case 'Q' :
 	      	event.preventDefault();
 	      	window.open(window.location.href, '_blank');
 	      	break;
@@ -766,6 +922,36 @@
 	      	}
 	  	}
 	});
+	
+	function showSettingsModal() {
+		hideDraw();
+	    get('modalOverlay').style.display = 'block';
+	    get('settingsModal').style.display = 'block';
+	    initializeColorPickers();
+	    calcTextStats();
+	    document.addEventListener('keydown', settingsListener);
+	    
+	    function settingsListener(e) {
+	    	if (e.key === 'Escape') {
+	    		document.removeEventListener('keydown', settingsListener);
+			    hideSettingsModal();
+	    	}
+	    }
+	}
+
+	function hideSettingsModal() {
+	    get('modalOverlay').style.display = 'none';
+	    get('settingsModal').style.display = 'none';
+	}
+	
+	function hideDraw() {
+		saveAndHideDrawingToolbar();
+	}
+
+	function resetTheme() {
+	    themeManager.updateTheme(themeManager.defaultTheme);
+	    initializeColorPickers();
+	}
 	
 	/* Theme */
 	class ThemeManager {
@@ -863,6 +1049,7 @@
 	}
 
 	const themeManager = new ThemeManager();
+	renderCustomThemes(); // Show themes already set
 
 	function initializeColorPickers() {
 	    const colorPickers = {
@@ -910,29 +1097,80 @@
 	        }
 	    }
 	}
+	
+	async function createCustomTheme() {
+	   	const button = get("createNewTheme");
+	   	//button.innerHTML = `<input class="p1" style="margin-top: 4px;" placeholder="Enter theme name...">`;
+	   	//button.focus();
+	   	saveCustomTheme(await prompts("Enter theme name..."));
+	}
+	
+	function saveCustomTheme(themeId) {
+	    const theme = {};
 
-	function showSettingsModal() {
-	    get('modalOverlay').style.display = 'block';
-	    get('settingsModal').style.display = 'block';
-	    initializeColorPickers();
-	    calcTextStats();
-	    document.addEventListener('keydown', settingsListener);
-	    
-	    function settingsListener(e) {
-	    	if (e.key === 'Escape') {
-	    		document.removeEventListener('keydown', settingsListener);
-			    hideSettingsModal();
-	    	}
+	    for (const variable of Object.keys(themeManager.def)) {
+	        theme[variable] = themeManager.getColor(variable);
+	    }
+
+	    const allThemes = JSON.parse(localStorage.getItem("customThemes") || "{}");
+	    allThemes[themeId] = theme;
+
+	    localStorage.setItem("customThemes", JSON.stringify(allThemes));
+
+	    renderCustomThemes();
+	}
+	
+	function deleteCustomTheme(themeId) {
+	    const allThemes = JSON.parse(localStorage.getItem("customThemes") || "{}");
+	    delete allThemes[themeId];
+
+	    localStorage.setItem("customThemes", JSON.stringify(allThemes));
+
+	    renderCustomThemes();
+	}
+	
+	function renderCustomThemes() {
+	    const container = document.querySelector(".save-options");
+	    const allThemes = JSON.parse(localStorage.getItem("customThemes") || "{}");
+
+	    container.querySelectorAll(".custom-theme").forEach(el => el.remove()); // Clear all first, re-add
+
+	    for (const [name, theme] of Object.entries(allThemes)) {
+	        const div = document.createElement("div");
+	        div.className = "save-option custom-theme";
+	        div.onclick = (e) => handleCustomClick(e, name);
+	        div.title = name;
+
+	        div.innerHTML = `
+	            <strong>${name}</strong>
+	            <p class="p1">Your saved custom theme</p>
+	        `;
+
+	        // Insert before the "+" button
+	        const plusButton = get("createNewTheme");
+	        container.insertBefore(div, plusButton);
 	    }
 	}
-
-	function hideSettingsModal() {
-	    get('modalOverlay').style.display = 'none';
-	    get('settingsModal').style.display = 'none';
+	
+	async function handleCustomClick(e, name) {
+		if (e.ctrlKey) {
+			hideModal();
+			const resp = await suggest("Delete Theme?", name);
+			if (resp === true) { deleteCustomTheme(name); }
+			showSettingsModal();
+		} else {
+			applyCustomTheme(name);
+		}
 	}
+	
+	function applyCustomTheme(name) {
+	    const allThemes = JSON.parse(localStorage.getItem("customThemes") || "{}");
+	    const theme = allThemes[name];
 
-	function resetTheme() {
-	    themeManager.updateTheme(themeManager.defaultTheme);
+	    if (!theme) return;
+
+	    themeManager.def = { ...themeManager.defaultTheme, ...theme };
+	    themeManager.updateTheme(theme);
 	    initializeColorPickers();
 	}
 
@@ -1272,6 +1510,7 @@
 	    selection.removeAllRanges();
 	    selection.addRange(newRange);
 	}
+
 	function highlightCode() {
 	  if (syntax_highlight === 'false') return;
 	  
@@ -1417,70 +1656,31 @@
 	let selectedStroke = null;
 	let dragStartX = 0, dragStartY = 0;
 	let currentPath = null;
+	let base_width = 5;
 
 	const drawingToolbar = document.getElementById('drawingToolbar');
 	let svgOverlay = null;
 
-	function toggleDrawingToolbar() {
-	    const textToolbar = document.getElementById('textToolbar');
+	function createSvgOverlay() {
+	    svgOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	    svgOverlay.id = 'drawingOverlay';
+	    get("edContainer").appendChild(svgOverlay);
 	    
-	    drawingToolbar.classList.remove('hide');
-	    textToolbar.classList.add('hide');
-	    isDrawingModeActive = true;
-	    
-	    if (!svgOverlay) {
-	        svgOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-	        svgOverlay.id = 'drawingOverlay';
-	        editor.appendChild(svgOverlay);
-	        
-	        ['mousedown', 'touchstart'].forEach(event => {
-	            svgOverlay.addEventListener(event, startDrawing, { passive: false });
-	        });
-	        ['mousemove', 'touchmove'].forEach(event => {
-	            svgOverlay.addEventListener(event, drawStroke, { passive: false });
-	        });
-	        ['mouseup', 'touchend'].forEach(event => {
-	            svgOverlay.addEventListener(event, endStroke, { passive: true });
-	        });
-	    } else {
-	        svgOverlay.style.display = 'block';
-	    }
-	    
-	    hideMenu();
+	    svgOverlay.addEventListener('pointerdown', startDrawing, { passive: false });
+	    svgOverlay.addEventListener('pointermove', drawStroke, { passive: false });
+	    svgOverlay.addEventListener('touchmove', drawStroke, { passive: false });
+	    svgOverlay.addEventListener('pointerup', endStroke, { passive: true });
+	    svgOverlay.addEventListener('pointercancel', endStroke, { passive: true });
+	    svgOverlay.addEventListener('pointerleave', endStroke, { passive: true });
 	}
 
-	document.addEventListener('keydown', (e) => {
-	    if (e.key === 'Shift' && isDrawingModeActive) {
-	        isShiftPressed = true;
-	        if (isDrawing) {
-	            endStroke();
-	        }
-	        svgOverlay.style.display = "none";
-	    }
-	});
-
-	document.addEventListener('keyup', (e) => {
-	    if (e.key === 'Shift' && isDrawingModeActive) {
-	        isShiftPressed = false;
-	        selectedStroke = null;
-	        showToolbar("drawingToolbar");
-	        svgOverlay.style.display = "block";
-	    }
-	});
-
-	function getPosition(event) {
-	    const rect = editor.getBoundingClientRect();
+	function calculatePressureThickness(basePressure, pressure) {
+	    const minMultiplier = 0.5;
+	    const maxMultiplier = 1.5;
 	    
-	    if (event.touches) {
-	        return {
-	            x: event.touches[0].clientX - rect.left,
-	            y: event.touches[0].clientY - rect.top
-	        };
-	    }
-	    return {
-	        x: event.clientX - rect.left,
-	        y: event.clientY - rect.top
-	    };
+	    const multiplier = minMultiplier + (pressure * (maxMultiplier - minMultiplier));
+	    
+	    return basePressure * multiplier;
 	}
 
 	function startDrawing(e) {
@@ -1504,7 +1704,9 @@
 	        return;
 	    }
 	    
-	    setInkThickness((line_width || 1) * (e.pressure || 1));
+	    const pressure = e.pressure || 1;
+	    const initialThickness = calculatePressureThickness(base_width, pressure);
+	    setInkThickness(initialThickness);
 	    
 	    isDrawing = true;
 	    const pos = getPosition(e);
@@ -1536,13 +1738,97 @@
 	    
 	    if (!isDrawing || isShiftPressed) return;
 	    
+	    const pressure = e.pressure || 1;
+	    const variableThickness = calculatePressureThickness(base_width, pressure);
+	    setInkThickness(variableThickness);
+	    
 	    const pos = getPosition(e);
 	    currentStroke.push(`L ${pos.x} ${pos.y}`);
 	    lastX = pos.x;
 	    lastY = pos.y;
 	    
 	    currentPath.setAttribute('d', currentStroke.join(' '));
+	    currentPath.setAttribute('stroke-width', line_width);
 	    e.preventDefault();
+	}
+
+	function setInkThickness(thickness) {
+	    line_width = thickness;
+	}
+
+	function setbInkThickness(t) {
+	    base_width = t;
+	    setInkThickness(t);
+	}
+
+	function selectPenColor() {
+	    base_width = 3;
+	    setInkThickness(base_width);
+	    stroke_color = get('penColor').value;
+	}
+
+	function selectHighlighter() {
+	    base_width = 20;
+	    setInkThickness(base_width);
+	    stroke_color = 'rgba(255, 255, 0, 0.5)';
+	}
+
+	function selectEraser() {
+	    base_width = 30;
+	    setInkThickness(base_width);
+	    stroke_color = 'var(--bg-white)';
+	}
+
+	function toggleDrawingToolbar() {
+	    const textToolbar = document.getElementById('textToolbar');
+	    
+	    drawingToolbar.classList.remove('hide');
+	    textToolbar.classList.add('hide');
+	    isDrawingModeActive = true;
+        showSvgOverlay();
+	    
+	    hideMenu();
+	}
+
+	function showSvgOverlay() {
+		if (!svgOverlay) {
+			createSvgOverlay();
+		}
+		
+        svgOverlay.style.height = editor.clientHeight;
+        svgOverlay.style.width = editor.clientWidth;
+		svgOverlay.style.display = "block";
+	}
+
+	document.addEventListener('keydown', (e) => {
+	    if (e.key === 'Shift' && isDrawingModeActive) {
+	        isShiftPressed = true;
+	        if (isDrawing) {
+	            endStroke();
+	        }
+	        svgOverlay.style.display = "none";
+	    }
+	});
+
+	document.addEventListener('keyup', (e) => {
+	    if (e.key === 'Shift' && isDrawingModeActive) {
+	        isShiftPressed = false;
+	        selectedStroke = null;
+	        showToolbar("drawingToolbar");
+	        deselectAllImages();
+	        svgOverlay.style.display = "block";
+	    }
+	});
+
+	function getPosition(event) {
+	    const rect = editor.getBoundingClientRect();
+	    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+	    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+	    const x = (event.touches ? event.touches[0].clientX : event.clientX) - rect.left + scrollLeft;
+	    const y = (event.touches ? event.touches[0].clientY : event.clientY) - rect.top + scrollTop;
+
+	    return { x, y };
 	}
 
 	function endStroke() {
@@ -1550,56 +1836,101 @@
 	        selectedStroke = null;
 	        return;
 	    }
-	    
+
 	    if (!isDrawing || !isDrawingModeActive) return;
-	    
-	    if (currentStroke.length > 1) {
-	        const coords = [];
-	        currentStroke.forEach(segment => {
-	            const matches = segment.match(/-?\d+(\.\d+)?/g);
-	            if (matches && matches.length >= 2) {
-	                coords.push({
-	                    x: parseFloat(matches[matches.length - 2]),
-	                    y: parseFloat(matches[matches.length - 1])
-	                });
-	            }
-	        });
-	        
-	        const minX = Math.min(...coords.map(c => c.x)) - line_width / 2;
-	        const minY = Math.min(...coords.map(c => c.y)) - line_width / 2;
-	        const maxX = Math.max(...coords.map(c => c.x)) + line_width / 2;
-	        const maxY = Math.max(...coords.map(c => c.y)) + line_width / 2;
-	        
+
+	    const scrollX = editor.scrollLeft;
+	    const scrollY = editor.scrollTop;
+	    const hasMovement = currentStroke.length > 1;
+
+	    if (hasMovement) {
+	        const coords = currentStroke.flatMap(segment =>
+	            Array.from(segment.matchAll(/-?\d+(\.\d+)?/g)).map(m => parseFloat(m[0]))
+	        );
+
+	        const points = [];
+	        for (let i = 0; i < coords.length; i += 2) {
+	            points.push({ x: coords[i], y: coords[i + 1] });
+	        }
+
+	        const padding = line_width / 2;
+	        const xs = points.map(p => p.x), ys = points.map(p => p.y);
+	        const minX = Math.min(...xs) - padding;
+	        const minY = Math.min(...ys) - padding;
+	        const maxX = Math.max(...xs) + padding;
+	        const maxY = Math.max(...ys) + padding;
 	        const width = maxX - minX;
 	        const height = maxY - minY;
-	        
+
 	        const adjustedStroke = currentStroke.map(segment => {
-	            let coordIndex = 0;
-	            return segment.replace(/-?\d+(\.\d+)?/g, (match) => {
+	            let index = 0;
+	            return segment.replace(/-?\d+(\.\d+)?/g, match => {
 	                const val = parseFloat(match);
-	                const adjustedVal = (coordIndex % 2 === 0) ? (val - minX) : (val - minY);
-	                coordIndex++;
-	                return adjustedVal.toString();
+	                const adjusted = index % 2 === 0 ? val - minX : val - minY;
+	                index++;
+	                return adjusted.toString();
 	            });
 	        });
-	        
-	        const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}"><path d="${adjustedStroke.join(' ')}" stroke="${stroke_color}" stroke-width="${line_width}" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-	        
+
+	        const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
+	            <path d="${adjustedStroke.join(' ')}" stroke="${stroke_color}" stroke-width="${line_width}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+	        </svg>`;
+
 	        const img = document.createElement('img');
 	        img.src = `data:image/svg+xml;base64,${btoa(svgString)}`;
-	        
+
 	        const wrapper = resizeableWrap(img);
-	        wrapper.style.cssText = `position: absolute; left: ${minX}px; top: ${minY}px; width: ${width}px; height: ${height}px;`;
-	        
+	        wrapper.style.cssText = `position: absolute; left: ${minX + scrollX}px; top: ${minY + scrollY}px; width: ${width}px; height: ${height}px;`;
+
 	        editor.appendChild(wrapper);
 	        strokes.push(img);
-	    }
-	    
-	    if (currentPath) {
+
+	    } else if (currentStroke.length === 1) {
+		    const match = currentStroke[0].match(/M\s*(-?\d+(\.\d+)?)\s+(-?\d+(\.\d+)?)/);
+		    if (match) {
+		        const [x, y] = [parseFloat(match[1]), parseFloat(match[3])];
+		        const r = (line_width || 1) / 2;
+		        const size = r * 2;
+
+		        const svgNS = "http://www.w3.org/2000/svg";
+		        const svg = document.createElementNS(svgNS, "svg");
+		        svg.setAttribute("xmlns", svgNS);
+		        svg.setAttribute("width", size);
+		        svg.setAttribute("height", size);
+		        svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
+
+		        const circle = document.createElementNS(svgNS, "circle");
+		        circle.setAttribute("cx", r);
+		        circle.setAttribute("cy", r);
+		        circle.setAttribute("r", r);
+		        circle.setAttribute("fill", stroke_color);
+		        circle.setAttribute("stroke", "none");
+
+		        svg.appendChild(circle);
+
+		        const img = document.createElement("img");
+		        const serialized = new XMLSerializer().serializeToString(svg);
+		        img.src = `data:image/svg+xml;base64,${btoa(serialized)}`;
+
+		        const wrapper = resizeableWrap(img);
+		        wrapper.style.cssText = `
+		            position: absolute;
+		            left: ${x - r + scrollX}px;
+		            top: ${y - r + scrollY}px;
+		            width: ${size}px;
+		            height: ${size}px;
+		        `;
+
+		        editor.appendChild(wrapper);
+		        strokes.push(img);
+		    }
+		}
+
+	    if (currentPath && svgOverlay.contains(currentPath)) {
 	        svgOverlay.removeChild(currentPath);
 	        currentPath = null;
 	    }
-	    
+
 	    isDrawing = false;
 	    currentStroke = [];
 	}
@@ -1614,25 +1945,6 @@
 	get('penColor').addEventListener('input', (event) => {
 	    stroke_color = event.target.value;
 	});
-
-	function setInkThickness(thickness) {
-	    line_width = thickness;
-	}
-
-	function selectPenColor() {
-	    line_width = 3;
-	    stroke_color = get('penColor').value;
-	}
-
-	function selectHighlighter() {
-	    line_width = 20;
-	    stroke_color = 'rgba(255, 255, 0, 0.5)';
-	}
-
-	function selectEraser() {
-	    line_width = 30;
-	    stroke_color = 'var(--bg-white)';
-	}
 
 	function saveAndHideDrawingToolbar() {
 	    const textToolbar = document.getElementById('textToolbar');
@@ -1815,7 +2127,7 @@
 
 	async function mergeCells() {
 	  if (selectedCell) {
-	    const span = parseInt(await prompts("Enter merge value:", "2"));
+	    const span = parseInt(await prompts("Enter span value:", "2"));
 	    if (span) {
 	      selectedCell.colSpan = span;
 	    }
@@ -1863,12 +2175,13 @@
 	editor.addEventListener("keydown", check_key);
 	
 	function check_key(e) {
-		if (e.key === "Delete" || e.key === "Backspace") del_wrapper();
+		if (e.key === "Delete" || e.key === "Backspace") { del_wrapper(e);}
 		if (e.ctrlKey && e.key === "c") cwi();
 	}
 	
-	function del_wrapper() {
+	function del_wrapper(e) {
 	    if (activeWrapper) {
+	    	e.preventDefault();
 	        activeWrapper.remove();
 	        activeWrapper = null;
 	        showToolbar('textToolbar');
@@ -1904,10 +2217,11 @@
 	            await navigator.clipboard.write([item]);
 	        }, "image/png");
 	    } else {
-	        console.error("Image Copy Error - Unsupported blob type: ", blob.type);
+	        console.error("Image Copy Error - Unsupported blob: ", blob.type);
 	    }
 	}
 
+	/* Image (<img>) Editing Code */
 	let activeWrapper = null;
 	const imageWrappers = new Set();
 	const transformStates = new Map();
@@ -1969,7 +2283,9 @@
 	    touch.target.dispatchEvent(simulatedEvent);
 	}
 
-	editor.addEventListener('click', (event) => {
+	editor.addEventListener('pointerdown', ed_click);
+	
+	function ed_click(event) {
 	    const target = event.target;
 
 	    if (target.tagName === 'A') {
@@ -1981,7 +2297,7 @@
 	        return;
 	    }
 
-		if (!target.closest('.resizable') && !target.matches('.resize-handle, .rotateIcon') && target.tagName !== 'IMG') {			
+		if (!target.closest('.resizable') && !target.matches('.resize-handle, .rotateIcon') && target.tagName !== 'IMG') {
 		    deselectAllImages();
 		    exitCropMode();
 		    
@@ -1991,16 +2307,22 @@
 		    
 		    showToolbar('textToolbar');
 		}
+		
+	    if (event.pointerType === "touch" || event.pointerType === "pen") {
+	    	isTouch = true;
+	    } else {
+	    	isTouch = false;
+	    }
 
-	    if (target.tagName === 'IMG') {
+	    if (target.tagName === 'IMG' && target !== selectedImage) {
 	        selectImage(target);
 	    }
-	});
+	}
 	
 	let trigger = false;
 	editor.addEventListener("pointerdown", (event) => {
 	    const target = event.target;
-	    
+
 	    const wrapper = target.closest('.resizable');
 	    if (!wrapper) {
 	        if (target.tagName !== 'BUTTON') {
@@ -2054,7 +2376,7 @@
 	    
 	    const transformState = transformStates.get(activeWrapper);
 	    if (!transformState) return;
-	    
+
 	    if (isRotating) {
 	        const rect = activeWrapper.getBoundingClientRect();
 	        const centerX = rect.left + rect.width / 2;
@@ -2063,7 +2385,7 @@
 	        const calculatedAngle = Math.atan2(event.clientY - centerY, event.clientX - centerX) * (180 / Math.PI);
 	        const rotationAngle = ((calculatedAngle - 90) + 360) % 360;
 
-	        transformState.rotateAngle = rotationAngle;
+	        transformState.rotateAngle = Math.round(rotationAngle);
 	        updateRotationDisplay(activeWrapper, Math.round(transformState.rotateAngle) + '°');
 	        
 	        rotation.style.display = "block";
@@ -2102,25 +2424,30 @@
 	function selectImage(image) {
 	    deselectAllImages();
 	    selectedImage = image;
-	    const wrapper = image.closest('.resizable') || wrapImage(selectedImage);
-	    selectWrapper(wrapper);
+	    selectWrapper(wrapImage(selectedImage), 1);
 	}
 
-	function selectWrapper(wrapper) {
+	function selectWrapper(wrapper, n) {
 	    if (activeWrapper === wrapper) return;
-	    
-	    deselectAllImages();
-	    
+
+	    if (!n) deselectAllImages();
+
 	    activeWrapper = wrapper;
-	    wrapper.classList.add('resizing');
 	    selectedImage = wrapper.querySelector('img');
-	    
+	    wrapper.classList.add('resizing');
+
 	    if (!wrapper.querySelector('.resize-handle')) {
 	        addResizeHandles(wrapper);
 	    }
-	    
+
 	    normalizeImageWrapper(wrapper);
 	    showToolbar('imageToolbar');
+
+	    const currentZ = window.getComputedStyle(wrapper).zIndex;
+	    const zIndex = isNaN(parseInt(currentZ)) ? 0 : parseInt(currentZ);
+	    if (zIndex <= 1) {
+	        wrapper.style.zIndex = zIndex + 1;
+	    }
 	}
 
 	function normalizeImageWrapper(wrapper) {
@@ -2182,8 +2509,7 @@
 	    
 	    const wrapper = document.createElement('div');
 	    wrapper.classList.add('resizable');
-	    wrapper.style.position = 'relative';
-	    wrapper.style.display = 'inline-block';
+	    wrapper.style.width = '100%';
 	    image.parentNode.insertBefore(wrapper, image);
 	    wrapper.appendChild(image);
 	    
@@ -2195,18 +2521,33 @@
 	    const existingHandles = wrapper.querySelectorAll('.resize-handle, .rotateIcon, .rotate-display');
 	    if (existingHandles.length > 0) return;
 	    
-	    const handles = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+	    let __t = false;
+	    
+	    const handles = [
+	        ['top-left'],
+	        ['top-right'],
+	        ['bottom-left'],
+	        ['bottom-right'],
+	        ['top', 'shrink'],
+	        ['bottom', 'shrink'],
+            ['left', 'shrink'],
+            ['right', 'shrink']
+	    ];
 	    
 	    const fragment = document.createDocumentFragment();
 	    
-	    handles.forEach(handle => {
+	    if (isTouch) __t = true;
+	    
+	    handles.forEach(handleClasses => {
 	        const handleDiv = document.createElement('div');
-	        handleDiv.classList.add('resize-handle', handle);
+	        handleDiv.classList.add('resize-handle', ...handleClasses);
+	        if (__t) handleDiv.classList.add("touch");
 	        fragment.appendChild(handleDiv);
 	    });
 	    
 	    const rotateIcon = document.createElement('div');
 	    rotateIcon.className = "rotateIcon";
+	    if (__t) rotateIcon.classList.add("touch");
 	    rotateIcon.title = "Drag to rotate image";
 	    fragment.appendChild(rotateIcon);
 	    
@@ -2216,18 +2557,44 @@
 	    
 	    wrapper.appendChild(fragment);
 	    
-	    if (isCropping) convertToCropHandles(wrapper);
+		if (isCropping) convertToCropHandles(wrapper);
+
+        const width = parseFloat(activeWrapper.style.width);
+        const height = parseFloat(activeWrapper.style.height);
+
+        height < 65 ? hideVerticalShrinks() : showVerticalShrinks();
+        width < 65 ? hideHorizontalShrinks() : showHorizontalShrinks();
 	}
+
+	function hideHorizontalShrinks() {
+        editor.querySelectorAll(".resize-handle.shrink.top, .resize-handle.shrink.bottom").forEach(el => { el.style.display = "none" });
+	}
+
+	function hideVerticalShrinks() {
+        editor.querySelectorAll(".resize-handle.shrink.left, .resize-handle.shrink.right").forEach(el => { el.style.display = "none" });
+	}
+
+    function showHorizontalShrinks() {
+		editor.querySelectorAll(".resize-handle.shrink.top, .resize-handle.shrink.bottom").forEach(el => { el.style.display = "block" });
+    }
+
+    function showVerticalShrinks() {
+        editor.querySelectorAll(".resize-handle.shrink.left, .resize-handle.shrink.right").forEach(el => { el.style.display = "block" });
+    }
 
 	function initResize(event) {
 	    if (!selectedImage) return;
 	    
 	    const computedStyle = getComputedStyle(selectedImage);
+	    const startWidth = parseInt(computedStyle.width, 10) || selectedImage.offsetWidth;
+	    const startHeight = parseInt(computedStyle.height, 10) || selectedImage.offsetHeight;
+	    
 	    resizeState = {
 	        startX: event.clientX,
 	        startY: event.clientY,
-	        startWidth: parseInt(computedStyle.width, 10) || selectedImage.offsetWidth,
-	        startHeight: parseInt(computedStyle.height, 10) || selectedImage.offsetHeight,
+	        startWidth: startWidth,
+	        startHeight: startHeight,
+	        aspectRatio: startWidth / startHeight,
 	        currentHandle: resizeState.currentHandle
 	    };
 	}
@@ -2237,36 +2604,89 @@
 	    
 	    const deltaX = event.clientX - resizeState.startX;
 	    const deltaY = event.clientY - resizeState.startY;
+		let newWidth, newHeight;
+		const rsb = get("resetShrinks");
+	    
+        switch (resizeState.currentHandle) {
+            case 'top-left':
+                const deltaLeft = Math.abs(deltaX) > Math.abs(deltaY) ? -deltaX : -deltaY * resizeState.aspectRatio;
+                newWidth = Math.max(20, resizeState.startWidth + deltaLeft);
+                newHeight = newWidth / resizeState.aspectRatio;
+                break;
 
-	    let newWidth, newHeight;
+            case 'top-right':
+                const deltaTopRight = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : -deltaY * resizeState.aspectRatio;
+                newWidth = Math.max(20, resizeState.startWidth + deltaTopRight);
+                newHeight = newWidth / resizeState.aspectRatio;
+                break;
 
-	    switch (resizeState.currentHandle) {
-	        case 'top-left':
-	            newWidth = Math.max(20, resizeState.startWidth - deltaX);
-	            newHeight = Math.max(20, resizeState.startHeight - deltaY);
-	            break;
-	        case 'top-right':
-	            newWidth = Math.max(20, resizeState.startWidth + deltaX);
-	            newHeight = Math.max(20, resizeState.startHeight - deltaY);
-	            break;
-	        case 'bottom-left':
-	            newWidth = Math.max(20, resizeState.startWidth - deltaX);
-	            newHeight = Math.max(20, resizeState.startHeight + deltaY);
-	            break;
-	        case 'bottom-right':
-	            newWidth = Math.max(20, resizeState.startWidth + deltaX);
-	            newHeight = Math.max(20, resizeState.startHeight + deltaY);
-	            break;
+            case 'bottom-left':
+                const deltaBottomLeft = Math.abs(deltaX) > Math.abs(deltaY) ? -deltaX : deltaY * resizeState.aspectRatio;
+                newWidth = Math.max(20, resizeState.startWidth + deltaBottomLeft);
+                newHeight = newWidth / resizeState.aspectRatio;
+                break;
+
+            case 'bottom-right':
+                const deltaRight = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY * resizeState.aspectRatio;
+                newWidth = Math.max(20, resizeState.startWidth + deltaRight);
+                newHeight = newWidth / resizeState.aspectRatio;
+                break;
+
+            case 'top':
+                newHeight = Math.max(20, resizeState.startHeight - deltaY);
+				newWidth = resizeState.startWidth;
+				rsb.style.display = "block";
+                break;
+
+            case 'bottom':
+                newHeight = Math.max(20, resizeState.startHeight + deltaY);
+                newWidth = resizeState.startWidth;
+				rsb.style.display = "block";
+                break;
+
+            case 'left':
+                newWidth = Math.max(20, resizeState.startWidth - deltaX);
+                newHeight = resizeState.startHeight;
+                rsb.style.display = "block";
+                break;
+
+            case 'right':
+                newWidth = Math.max(20, resizeState.startWidth + deltaX);
+                newHeight = resizeState.startHeight;
+                rsb.style.display = "block";
+                break;
+        }
+	    
+	    if (newHeight < 20) {
+	        newHeight = 20;
+	        newWidth = newHeight * resizeState.aspectRatio;
 	    }
+	    
+	    activeWrapper.style.width = `${newWidth}px`;
+		activeWrapper.style.height = `${newHeight}px`;
 
-	    selectedImage.style.width = `${newWidth}px`;
-	    selectedImage.style.height = `${newHeight}px`;
+        selectedImage.style.width = `${newWidth}px`;
+        selectedImage.style.height = `${newHeight}px`;
+
+		newHeight < 70 ? hideVerticalShrinks() : showVerticalShrinks();
+        newWidth < 70 ? hideHorizontalShrinks() : showHorizontalShrinks();
 	    
 	    const cropStateData = cropStates.get(activeWrapper);
 	    if (cropStateData && !cropStateData.active) {
 	        cropStateData.width = newWidth;
 	        cropStateData.height = newHeight;
 	    }
+	}
+
+	function resetShrinkAdj() {
+        if (!selectedImage || !activeWrapper) return;
+
+		selectedImage.style.width = "auto";
+		selectedImage.style.height = "auto";
+
+        activeWrapper.style.width = "auto";
+        activeWrapper.style.height = "auto";
+		get("resetShrinks").style.display = "none";
 	}
 
 	function toggleCrop() {
@@ -2285,7 +2705,7 @@
 	        enterCropMode();
 	        isCropping = true;
 	        button.textContent = "End Crop";
-	        button.title = "Click to stop cropping image and save";
+	        button.title = "Click to stop cropping image";
 	    }
 	}
 
@@ -2507,7 +2927,7 @@
 	
 	let imgCount = 0;
 
-	document.addEventListener('paste', async (event) => {
+	editor.addEventListener('paste', async (event) => {
 	    const items = event.clipboardData.items;
 	    
 	    for (let item of items) {
@@ -2544,99 +2964,67 @@
 	        }
 	    }
 	    
-	    const text = event.clipboardData.getData('text/plain');
-	    let html = event.clipboardData.getData('text/html');
-	    
-	    if (html) {
-	        event.preventDefault();
-	        
-	        html = html.replace(/<!--StartFragment-->|<!--EndFragment-->/g, '');
-	        
-	        const div = document.createElement('div');
-	        div.innerHTML = html;
-	        
-	        const walker = document.createTreeWalker(
-	            div,
-	            NodeFilter.SHOW_ELEMENT,
-	            null,
-	            false
-	        );
-	        
-	        const elements = [];
-	        let node;
-	        while (node = walker.nextNode()) {
-	            elements.push(node);
-	        }
-	        
-	        for (let i = 0; i < elements.length; i++) {
-	            const el = elements[i];
-	            const tagName = el.tagName.toLowerCase();
-	            const attrs = el.attributes;
-	            
-	            if (tagName === 'font') {
-	                for (let j = attrs.length - 1; j >= 0; j--) {
-	                    if (attrs[j].name !== 'face') {
-	                        el.removeAttribute(attrs[j].name);
-	                    }
-	                }
-	            } else if (tagName === 'a') {
-	                for (let j = attrs.length - 1; j >= 0; j--) {
-	                    const name = attrs[j].name;
-	                    if (name !== 'href' && name !== 'title' && name !== 'target' && name !== 'alt') {
-	                        el.removeAttribute(name);
-	                    }
-	                }
-	            } else {
-	                for (let j = attrs.length - 1; j >= 0; j--) {
-	                    const name = attrs[j].name;
-	                    if (name !== 'alt') {
-	                        el.removeAttribute(name);
-	                    }
-	                }
-	            }
-	        }
-	        
-	        const selection = window.getSelection();
-	        if (selection.rangeCount > 0) {
-	            const range = selection.getRangeAt(0);
-	            range.deleteContents();
-	            range.insertNode(div.firstChild ? div : document.createTextNode(''));
-	            range.collapse(false);
-	            selection.removeAllRanges();
-	            selection.addRange(range);
-	        }
-	    } else if (text) {
-	        event.preventDefault();
-	        
-	        const selection = window.getSelection();
-	        if (selection.rangeCount > 0) {
-	            const range = selection.getRangeAt(0);
-	            
-	            const lines = text.split('\n');
-	            const fragment = document.createDocumentFragment();
-	            
-	            for (let i = 0; i < lines.length; i++) {
-	                if (i > 0) {
-	                    fragment.appendChild(document.createElement('br'));
-	                }
-	                if (lines[i].trim() !== '') {
-	                    fragment.appendChild(document.createTextNode(lines[i]));
-	                } else {
-	                    fragment.appendChild(document.createTextNode('\u00A0'));
-	                    if (i < lines.length - 1) {
-	                        fragment.appendChild(document.createElement('br'));
-	                    }
-	                }
-	            }
-	            
-	            range.deleteContents();
-	            range.insertNode(fragment);
-	            range.setStartAfter(fragment.lastChild);
-	            range.setEndAfter(fragment.lastChild);
-	            selection.removeAllRanges();
-	            selection.addRange(range);
-	        }
-	    }
+        let html = event.clipboardData.getData('text/html') || '';
+        const text = event.clipboardData.getData('text/plain');
+
+        event.preventDefault();
+
+        if (!html && text) {
+            const lines = text.split('\n');
+            html = lines.map((line, i) => {
+                const trimmed = line.trim();
+                if (trimmed !== '') {
+                    return line;
+                } else {
+                    const isNotFirst = i > 0;
+                    const hasNext = i < lines.length - 1;
+                    return isNotFirst || hasNext ? `<div>\u00A0</div>` : '';
+                }
+            }).filter(Boolean).join('');
+        }
+
+        html = html.replace(/<!--StartFragment-->|<!--EndFragment-->/g, '');
+
+		const div = document.createElement('t');
+        div.innerHTML = html;
+
+        const walker = document.createTreeWalker(div, NodeFilter.SHOW_ELEMENT, null, false);
+        const elements = [];
+        let node;
+        while (node = walker.nextNode()) {
+            elements.push(node);
+        }
+
+        for (let i = 0; i < elements.length; i++) {
+            const el = elements[i];
+            const tagName = el.tagName.toLowerCase();
+            const attrs = el.attributes;
+
+            for (let j = attrs.length - 1; j >= 0; j--) {
+                const name = attrs[j].name;
+                if (tagName === 'font') {
+                    if (name !== 'face') el.removeAttribute(name);
+                } else if (tagName === 'a') {
+                    if (name !== 'href' && name !== 'title' && name !== 'target' && name !== 'alt') {
+                        el.removeAttribute(name);
+                    }
+                } else {
+                    if (name !== 'alt') el.removeAttribute(name);
+                }
+            }
+        }
+
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(div.firstChild ? div : document.createTextNode(''));
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+		}
+
+		processLinks();
 	});
 
 	document.addEventListener('drop', async (event) => {
@@ -2696,13 +3084,12 @@
 		const v = Number(get("Version").textContent.substring(3));
 		if (v > version) {
 			localStorage.setItem("LatestVersion", v);
-			const feedback = await suggest("Updated to Version " + v, `Now Running latest EBF Editor Version ${v}.`);
+			const feedback = await suggest("Updated to Version " + v, `Running latest Version ${v}. <span class="info" onclick="go('https://eselagas.github.io/:r?pth=What's New - EBF Editor&loc=docs/LSBFQkYgRE9DUyAtOkJyYXNvdkVUUzE0/What's New - EBF Editor&id=LSBFQkYgRE9DUyAtOkJyYXNvdkVUUzE0&r_type=ebf_file');">What's New</span>`);
 			return feedback;
 		} else return;
 	}
 	
 	async function checkUpdates() {
-		//const furl = "https://api.github.com/repos/eselagas/app.files/contents/docs/ebf-stats/updateSurvey.survey";
 		checkVersion();
 	}
 	
@@ -2761,50 +3148,60 @@
 
 	/* Modal management */
 	function showSaveOptions() {
-	    selectedSaveOptions = { encryption: null, saveLocation: null };
-	    document.querySelectorAll('.save-option').forEach(opt => {
-	        opt.classList.remove('selected');
-	    });
-	    
-	    if (!isConnected) { get('gh').style.display = 'none'; }
-	    else { get('gh').style.display = 'block'; }
-	    
-	    const gh = get('gh');
-	    if (viewShare) {
-	    	gh.style.opacity = '0.5';
-	    	gh.onclick = null;
-    	} else {
-	    	gh.style.opacity = '1.0';
-	    	gh.onclick = () => selectSaveOption('github');
-    	}
-	    
-	    get('modalOverlay').style.display = 'block';
-	    get('saveOptionsModal').style.display = 'block';
-	    get('passwordModal').style.display = 'none';
-	    get('openFileModal').style.display = 'none';
-	    
-	  	document.addEventListener("keydown", saveOpt_click);
+	  selectedSaveOptions = { encryption: null, saveLocation: null };
+
+	  document.querySelectorAll('.save-option').forEach(opt => 
+	    opt.classList.remove('selected')
+	  );
+
+	  const gh = get('gh');
+	  gh.style.display = isConnected ? 'block' : 'none';
+
+	  if (viewShare) {
+	    gh.style.opacity = '0.5';
+	    gh.onclick = null;
+	  } else {
+	    gh.style.opacity = '1.0';
+	    gh.onclick = () => selectSaveOption('github');
+	  }
+
+	  get('modalOverlay').style.display = 'block';
+	  get('saveOptionsModal').style.display = 'block';
+	  get('passwordModal').style.display = 'none';
+	  get('openFileModal').style.display = 'none';
+
+	  document.addEventListener("keydown", saveOpt_click);
 	}
-	
-	async function saveOpt_click(event) {
-	  if (event.key === "Enter") {
-	  	document.removeEventListener("keydown", saveOpt_click);
-	  	await delay(40);
-	    init_save();
+
+	function saveOpt_click(ev) {
+	  if (ev.key === "Enter") {
+	    document.removeEventListener("keydown", saveOpt_click);
+
+	    const otk = (e) => {
+	      if (e.key === "Enter") {
+	        document.removeEventListener("keyup", otk);
+	        init_save();
+	      }
+	    };
+
+	    document.addEventListener("keyup", otk);
 	  }
 	}
 
+	let e = 0;
 	function selectSaveOption(option) {
-	    if (['encrypted', 'unencrypted'].includes(option)) {
-	        selectedSaveOptions.encryption = option;
-	        document.querySelectorAll('.save-options:first-of-type .save-option')
-	            .forEach(opt => opt.classList.remove('selected'));
-	        event.currentTarget.classList.add('selected');
+	    if (option === 'encrypted') {
+	    	if (e === 1) {
+	    		selectedSaveOptions.encryption = null;
+	    		e = 0;
+    		} else {
+	        	selectedSaveOptions.encryption = option;
+	        	e = 1;
+        	}
 	    } else {
-	        event.currentTarget.classList.toggle('selected');
 	        selectedSaveOptions.saveLocation += option;
 	    }
-	    
+        event.currentTarget.classList.toggle('selected');
 	}
 
 	async function delay(ms) {
@@ -2812,27 +3209,26 @@
 	}
 
 	async function init_save() {
-	    if (!selectedSaveOptions.encryption || !selectedSaveOptions.saveLocation) {
-	        alert("Please select both encryption and save options");
+	    if (!selectedSaveOptions.saveLocation) {
+	        alert("Please select a save option");
 	        return;
 	    }
 
 	    if (!fileName) {
-	        await delay(100);
 	        fileName = await prompts("Enter filename:", "Untitled Document");
 	        changeDocTitle(fileName);
 	    }
 
 	    if (selectedSaveOptions.saveLocation.includes('download')) {
-	        proceed_save();
+	        proceed_save(1);
 	    } else {
 	        dispModal('save');
 	    }
 	}
 	
-	async function proceed_save() {
+	async function proceed_save(ha) {
 	    try {
-	        if (!selectedSaveOptions || !selectedSaveOptions.saveLocation || !selectedSaveOptions.encryption) {
+	        if (!selectedSaveOptions || !selectedSaveOptions.saveLocation) {
 	            throw new Error("Invalid save options provided.");
 	        }
 	        
@@ -2852,13 +3248,13 @@
 	                    });
 	                    
         	            hideModal();
-	            		alert("Encrypted Save Successful!");
+	            		if (!ha) alert("Encrypted Save Successful!");
 	                } catch (error) {
 	                    console.error("Error during encrypted save:", error);
 	                    alert('Encryption error: ' + error.message);
 	                }
 	            }, showSaveOptions);
-	        } else if (selectedSaveOptions.encryption === 'unencrypted') {
+	        } else {
 	            /* No Encryption */
 	            await saveFile({
 	                fileName,
@@ -2868,8 +3264,8 @@
 	            });
 	            
 	            hideModal();
-	            alert("Save Successful!");
-	        } else console.error("Invalid Variables - proceed_save()");
+	            if (!ha) alert("Save Successful!");
+	        }
 	    } catch (error) {
 	        console.error(error + "\nIn proceed_save()");
 	        if (error.message === "Failed to save the file") {
@@ -2882,23 +3278,6 @@
 	}
 	
 	let url = new URL(window.location.href);
-
-	const shareSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="15px" height="15px" viewBox="0 0 15 15" fill="none"  stroke="var(--text-primary)">
-	  <path fill-rule="evenodd" clip-rule="evenodd" d="M3.5 5.00006C3.22386 5.00006 3 5.22392 3 5.50006L3 11.5001C3 11.7762 3.22386 12.0001 3.5 12.0001L11.5 12.0001C11.7761 12.0001 12 11.7762 12 11.5001L12 5.50006C12 5.22392 11.7761 5.00006 11.5 5.00006L10.25 5.00006C9.97386 5.00006 9.75 4.7762 9.75 4.50006C9.75 4.22392 9.97386 4.00006 10.25 4.00006L11.5 4.00006C12.3284 4.00006 13 4.67163 13 5.50006L13 11.5001C13 12.3285 12.3284 13.0001 11.5 13.0001L3.5 13.0001C2.67157 13.0001 2 12.3285 2 11.5001L2 5.50006C2 4.67163 2.67157 4.00006 3.5 4.00006L4.75 4.00006C5.02614 4.00006 5.25 4.22392 5.25 4.50006C5.25 4.7762 5.02614 5.00006 4.75 5.00006L3.5 5.00006ZM7 1.6364L5.5682 3.0682C5.39246 3.24393 5.10754 3.24393 4.9318 3.0682C4.75607 2.89246 4.75607 2.60754 4.9318 2.4318L7.1818 0.181802C7.26619 0.09741 7.38065 0.049999 7.5 0.049999C7.61935 0.049999 7.73381 0.09741 7.8182 0.181802L10.0682 2.4318C10.2439 2.60754 10.2439 2.89246 10.0682 3.0682C9.89246 3.24393 9.60754 3.24393 9.4318 3.0682L8 1.6364L8 8.5C8 8.77614 7.77614 9 7.5 9C7.22386 9 7 8.77614 7 8.5L7 1.6364Z" fill="#000000"/>
-	</svg>`;
-	
-	const fileSVG = `<svg xmlns="http://www.w3.org/2000/svg" fill="#000000" width="15px" height="15px" viewBox="0 0 30 30"  stroke="var(--text-primary)"> 
-	  <path fill-rule="evenodd" clip-rule="evenodd" d="M1305,456h-18a2,2,0,0,1-2-2V431a2,2,0,0,1,2-2h12.94a1.039,1.039,0,0,1,.83.289l5.91,5.911a1.017,1.017,0,0,1,.29.8H1307v18A2,2,0,0,1,1305,456Zm-5-24.522V436h4.52Zm5,6.522h-6a1,1,0,0,1-1-1v-6h-11v23h18V438Zm-12,7h6a1,1,0,0,1,0,2h-6A1,1,0,0,1,1293,445Z" transform="translate(-1282 -427.5)"/> 
-    </svg>`;
-	
-	const folderSVG = `<svg width="15px" height="15px" viewBox="0 0 26 26" stroke="var(--text-primary)" xmlns="http://www.w3.org/2000/svg">
-	  <path fill-rule="evenodd" clip-rule="evenodd" d="M1 5C1 3.34315 2.34315 2 4 2H8.43845C9.81505 2 11.015 2.93689 11.3489 4.27239L11.7808 6H13.5H20C21.6569 6 23 7.34315 23 9V19C23 20.6569 21.6569 22 20 22H4C2.34315 22 1 20.6569 1 19V10V9V5ZM3 9V10V19C3 19.5523 3.44772 20 4 20H20C20.5523 20 21 19.5523 21 19V9C21 8.44772 20.5523 8 20 8H13.5H11.7808H4C3.44772 8 3 8.44772 3 9ZM9.71922 6H4C3.64936 6 3.31278 6.06015 3 6.17071V5C3 4.44772 3.44772 4 4 4H8.43845C8.89732 4 9.2973 4.3123 9.40859 4.75746L9.71922 6Z" />
-	</svg>`;
-	
-	const shareDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(shareSVG);
-	const fileDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(fileSVG);
-	const folderDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(folderSVG);
-
 	let dir = [];
 	let addListener = true;
 	let deletedFiles = [];
@@ -2907,8 +3286,6 @@
 	  const filesList = document.getElementById('savedFilesList');
 	  const confOpen = get('confopen');
 	  const createFolder = get('create-folder');
-
-	  createFolder.style.display = "flex";
 
 	  if (operation) {
 	    setupSaveButton(confOpen);
@@ -2926,6 +3303,15 @@
 	    displayMessage(filesList, "You are viewing a shared file", "no_file", "You cannot modify these files");
 	    return;
 	  }
+
+		if (!userId) {
+			displayMessage(filesList, "Please sign in to view your online files", "no_file", "Click here to sign in");
+			filesList.onclick = () => {
+				hideModal();
+				promptSignIn();
+			};
+			return;
+		}
 
 	  try {
 	    showSpinner();
@@ -2977,7 +3363,8 @@
 	    if (!filesList.innerHTML.trim()) {
 	      displayMessage(filesList, "Please upload a file to see it here.", "no_file", "Save a file to GitHub to see it here.");
 	    }
-		
+
+        createFolder.style.display = "flex";
 		searchBar.value = '';
 	  	searchBar.focus();
 	    endSpinner();
@@ -3005,33 +3392,52 @@
 	  container.innerHTML = `<p class="${className}" title="${title}">${message}</p>`;
 	}
 
-	function createFileItem(filesList, file) {
-	  const fileItem = document.createElement('div');
-	  const ftitle = file.name.replace(/／/g, '/');
-	  if (deletedFiles.includes(ftitle)) {
-	  	fileItem.className = 'deleted-file-item';
-	  	return;
-  	  }
-	  fileItem.className = 'saved-file-item';
-	  fileItem.id = ftitle;
+    function createFileItem(filesList, file) {
+        const fileItem = document.createElement('div');
+        const ftitle = file.name.replace(/／/g, '/');
+        if (deletedFiles.includes(ftitle)) {
+            fileItem.className = 'deleted-file-item';
+            return;
+        }
+        fileItem.className = 'saved-file-item';
+        fileItem.id = ftitle;
 
-	  if (file.type === 'dir') {
-	    fileItem.innerHTML = `<img title="Folder" class="file_icon" src="${folderDataUrl}"><span class="open_file_title">${file.name}</span><span class="delete-icon" style="margin-left: 34px" title="Delete folder">🗑️</span>`;
-	    fileItem.title = `Navigate to '${ftitle}'`;
-	    fileItem.onclick = (event) => handleFolderClick(event, file.path, file.name);
-	  } else {
-	    fileItem.innerHTML = `<img title="File" class="file_icon" src="${fileDataUrl}"><span class="open_file_title">${ftitle}</span><svg class="share" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 15" stroke-width="1" fill="var(--text-primary)"><path d="M3.5 5.00006C3.22386 5.00006 3 5.22392 3 5.50006L3 11.5001C3 11.7762 3.22386 12.0001 3.5 12.0001L11.5 12.0001C11.7761 12.0001 12 11.7762 12 11.5001L12 5.50006C12 5.22392 11.7761 5.00006 11.5 5.00006L10.25 5.00006C9.97386 5.00006 9.75 4.7762 9.75 4.50006C9.75 4.22392 9.97386 4.00006 10.25 4.00006L11.5 4.00006C12.3284 4.00006 13 4.67163 13 5.50006L13 11.5001C13 12.3285 12.3284 13.0001 11.5 13.0001L3.5 13.0001C2.67157 13.0001 2 12.3285 2 11.5001L2 5.50006C2 4.67163 2.67157 4.00006 3.5 4.00006L4.75 4.00006C5.02614 4.00006 5.25 4.22392 5.25 4.50006C5.25 4.7762 5.02614 5.00006 4.75 5.00006L3.5 5.00006ZM7 1.6364L5.5682 3.0682C5.39246 3.24393 5.10754 3.24393 4.9318 3.0682C4.75607 2.89246 4.75607 2.60754 4.9318 2.4318L7.1818 0.181802C7.26619 0.09741 7.38065 0.049999 7.5 0.049999C7.61935 0.049999 7.73381 0.09741 7.8182 0.181802L10.0682 2.4318C10.2439 2.60754 10.2439 2.89246 10.0682 3.0682C9.89246 3.24393 9.60754 3.24393 9.4318 3.0682L8 1.6364L8 8.5C8 8.77614 7.77614 9 7.5 9C7.22386 9 7 8.77614 7 8.5L7 1.6364Z"></svg><span class="delete-icon" title="Delete file">🗑️</span>`;
-	    fileItem.title = `Open "${ftitle}"`;
-	    fileItem.onclick = (event) => handleFileClick(event, file, ftitle);
-	    
-	    if (operation) {
-	      fileItem.style.opacity = '0.4';
-	      fileItem.onclick = null;
-	      fileItem.title = '';
-	    }
-	  }
+        const folderSVG = `
+    <svg class="fi" width="22px" height="22px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path fill="var(--text-primary)" stroke-width="4" fill-rule="evenodd" clip-rule="evenodd" d="M1 5C1 3.34315 2.34315 2 4 2H8.43845C9.81505 2 11.015 2.93689 11.3489 4.27239L11.7808 6H13.5H20C21.6569 6 23 7.34315 23 9V19C23 20.6569 21.6569 22 20 22H4C2.34315 22 1 20.6569 1 19V10V9V5ZM3 9V10V19C3 19.5523 3.44772 20 4 20H20C20.5523 20 21 19.5523 21 19V9C21 8.44772 20.5523 8 20 8H13.5H11.7808H4C3.44772 8 3 8.44772 3 9ZM9.71922 6H4C3.64936 6 3.31278 6.06015 3 6.17071V5C3 4.44772 3.44772 4 4 4H8.43845C8.89732 4 9.2973 4.3123 9.40859 4.75746L9.71922 6Z"/>
+    </svg>`;
 
-	  filesList.appendChild(fileItem);
+        const fileSVG = `
+    <svg class="fi" xmlns="http://www.w3.org/2000/svg" width="22px" height="22px" viewBox="0 0 30 30">
+      <path fill="var(--text-primary)" stroke-width="2" fill-rule="evenodd" clip-rule="evenodd" d="M1305,456h-18a2,2,0,0,1-2-2V431a2,2,0,0,1,2-2h12.94a1.039,1.039,0,0,1,.83.289l5.91,5.911a1.017,1.017,0,0,1,.29.8H1307v18A2,2,0,0,1,1305,456Zm-5-24.522V436h4.52Zm5,6.522h-6a1,1,0,0,1-1-1v-6h-11v23h18V438Zm-12,7h6a1,1,0,0,1,0,2h-6A1,1,0,0,1,1293,445Z" transform="translate(-1282 -427.5)" />
+    </svg>`;
+
+        if (file.type === 'dir') {
+            fileItem.innerHTML = `
+      ${folderSVG}
+      <span class="open_file_title">${file.name}</span>
+      <span class="delete-icon" style="margin-left: 34px" title="Delete folder">🗑️</span>`;
+            fileItem.title = `Navigate to '${ftitle}'`;
+            fileItem.onclick = (event) => handleFolderClick(event, file.path, file.name);
+        } else {
+            fileItem.innerHTML = `
+      ${fileSVG}
+      <span class="open_file_title">${ftitle}</span>
+      <svg class="share" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 15" stroke-width="1" fill="var(--text-primary)">
+        <path d="M3.5 5.00006C3.22386 5.00006 3 5.22392 3 5.50006L3 11.5001C3 11.7762 3.22386 12.0001 3.5 12.0001L11.5 12.0001C11.7761 12.0001 12 11.7762 12 11.5001L12 5.50006C12 5.22392 11.7761 5.00006 11.5 5.00006L10.25 5.00006C9.97386 5.00006 9.75 4.7762 9.75 4.50006C9.75 4.22392 9.97386 4.00006 10.25 4.00006L11.5 4.00006C12.3284 4.00006 13 4.67163 13 5.50006L13 11.5001C13 12.3285 12.3284 13.0001 11.5 13.0001L3.5 13.0001C2.67157 13.0001 2 12.3285 2 11.5001L2 5.50006C2 4.67163 2.67157 4.00006 3.5 4.00006L4.75 4.00006C5.02614 4.00006 5.25 4.22392 5.25 4.50006C5.25 4.7762 5.02614 5.00006 4.75 5.00006L3.5 5.00006ZM7 1.6364L5.5682 3.0682C5.39246 3.24393 5.10754 3.24393 4.9318 3.0682C4.75607 2.89246 4.75607 2.60754 4.9318 2.4318L7.1818 0.181802C7.26619 0.09741 7.38065 0.049999 7.5 0.049999C7.61935 0.049999 7.73381 0.09741 7.8182 0.181802L10.0682 2.4318C10.2439 2.60754 10.2439 2.89246 10.0682 3.0682C9.89246 3.24393 9.60754 3.24393 9.4318 3.0682L8 1.6364L8 8.5C8 8.77614 7.77614 9 7.5 9C7.22386 9 7 8.77614 7 8.5L7 1.6364Z"/>
+      </svg>
+      <span class="delete-icon" title="Delete file">🗑️</span>`;
+            fileItem.title = `Open "${ftitle}"`;
+            fileItem.onclick = (event) => handleFileClick(event, file, ftitle);
+
+            if (operation) {
+                fileItem.style.opacity = '0.4';
+                fileItem.onclick = null;
+                fileItem.title = '';
+            }
+        }
+
+        filesList.appendChild(fileItem);
 	}
 
 	function handleFolderClick(event, path, name) {
@@ -3228,8 +3634,15 @@
 	  }
 	});
 	
+	function go(loc) {
+		if (!loc) return;
+		if (loc === "/") window.open(`https://eselagas.github.io/`);
+		
+		window.open(loc);
+	}
+	
 	async function crFolder() {
-		const name = await prompts("Folder Name", "New Folder") + '/';
+		const name = await prompts("New Folder Name", "New Folder") + '/';
 		if (!name) return;
 		const saveLocation = 'folder';
 		await saveFile({
@@ -3243,13 +3656,11 @@
 	}
 	
 	function shareFile(name, pth) {
-		const baseurl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-		const viewType = '0';
 		const newURL = `https://eselagas.github.io/:r?pth=${name}&loc=${pth}&id=${userId}&r_type=ebf_file`;
 		const final = newURL.replace(/ /g, ' ');
 
 		navigator.clipboard.writeText(final);
-		alert("Link copied to clipboard");
+		alert("Link Copied Successfully", `Link Copied to Clipboard<br><small><span class="info" title="Learn More" onclick="go('https://eselagas.github.io/:r?pth=Shared Files can be Saved Locally&loc=docs/LSBFQkYgRE9DUyAtOkJyYXNvdkVUUzE0/Shared Files can be Saved Locally&id=LSBFQkYgRE9DUyAtOkJyYXNvdkVUUzE0&r_type=ebf_file')"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAW0lEQVR4nO2USwrAMAgF53hJ73+CepCXTbqNJBJsaQZc+RlQEA6TXIABWgwD6kgQGa4e90jwFK0irz9doGA+X+DxfoE+fwMdgbJX5JEvsN3vuvaCyPAS2AA/pAGbZYu18rtkjAAAAABJRU5ErkJggg==" style="top: 6.5px;" alt="info">This file can be downloaded</span></small>`);
 	}
 
 	function showModal(modalId) {
@@ -3293,6 +3704,7 @@
 	    get('passwordModal').style.display = 'none';
 	    get('openFileModal').style.display = 'none';
 	    get('saveOptionsModal').style.display = 'none';
+	    get('settingsModal').style.display = 'none';
 	    
 	    selectedSaveOptions = { encryption: null, saveLocation: null };
 	    document.querySelectorAll('.save-option').forEach(opt => {
@@ -3359,21 +3771,38 @@
 	        if (saveLocation.includes('github')) {
 	            try {
 	                await saveToGithub(JSON.stringify(fileData), fileName.replace(/\//g, '／'));
-	                changeDocTitle(fileName);
+					changeDocTitle(fileName);
+					alert(fileName, "Saved successfully")
 	            } catch (error) {
 	                throw new Error('Failed to save file to GitHub: ' + error.message);
 	            }
 	        }
 
-	        if (saveLocation.includes('download')) {
-	            const blob = new Blob([JSON.stringify(fileData)], { type: 'application/json' });
-	            const url = URL.createObjectURL(blob);
-	            const a = document.createElement('a');
-	            a.href = url;
-	            a.download = `${fileName.replace(/[\/\\?*:|"<>]/g, '_')}.ebf`;
-	            a.click();
-	            URL.revokeObjectURL(url);
-	            changeDocTitle(fileName);
+			if (saveLocation.includes('download')) {
+				if (html) {
+					const blob = new Blob([JSON.stringify(fileData)], { type: 'application/json' });
+		            const url = URL.createObjectURL(blob);
+		            const a = document.createElement('a');
+		            a.href = url;
+		            a.download = `${fileName.replace(/[\/\\?*:|"<>]/g, '_')}.ebf`;
+		            a.click();
+		            URL.revokeObjectURL(url);
+	            } else {
+					app_run("saveAs", JSON.stringify({ "fdata": JSON.stringify(fileData), "fname": fileName }));
+				}
+				
+				const save = get('save');
+				save.onclick = preSaveLocal;
+                save.textContent = "Saved";
+                setTimeout(() => get("save").innerHTML = `Save<span id="saveDropdown" title="Right Click to Save As">▼</span>`, 1000);
+				changeDocTitle(fileName);
+				isSavedLocally = true;
+
+				save.addEventListener("contextmenu", (e) => {
+					e.preventDefault();
+
+                    showSaveOptions();
+				});
 	        }
 	        
 	        if (saveLocation === 'folder') {
@@ -3391,7 +3820,13 @@
 	        console.error('Save failed:', error);
 	        throw new Error('Failed to save the file');
 	    }
-    }
+	}
+
+	function preSaveLocal() {
+		selectedSaveOptions.saveLocation = "download";
+		init_save();
+        selectedSaveOptions.saveLocation = "";
+	}
     
 	function lightweightEncrypt(data) {
 	    const pseudoKey = 42;
@@ -3465,7 +3900,7 @@
 	    fileContent = null,
 	    editorElement = get('editor'),
 	    userId,
-	    canvasElement = get('svgOverlay')
+	    canvasElement = get('svgOverlay') || null
 	}) {
 	    try {
 	        showSpinner();
@@ -3515,7 +3950,7 @@
 	                hideModal();
 	            }
 	            fletype = 1;
-	            modURL('user-Pref', pref);
+	            if (user.preferences.url_file_open) modURL('user-Pref', pref);
 	        } else {
 	            /* Handle local files */
 	            fileData = parseFileContent(fileContent);
@@ -3551,7 +3986,8 @@
 	        modURL('lo_File', path.substring(62));
 	        modURL('path_name', file_path);
 	        modURL('type', fletype);
-	        modURL('name', fileName);
+			modURL('name', fileName);
+			app_run("resetSFP");
 	        return processFileContent(content, editorElement);
 	    } catch (error) {
 	        console.error('Open failed:', error);
@@ -3673,200 +4109,12 @@
 	    }
 	}
 	
-	/* Connection Status */	
-	class NetworkMonitor {
-	    constructor(statusElementId, options = {}) {
-	        this.statusElement = document.getElementById(statusElementId);
-	        this.isConnected = navigator.onLine;
-	        this.offlineCount = this.getStoredOfflineCount();
-	        this.lastOfflineTime = Date.now();
-	        this.intervalId = null;
-	        
-	        this.config = {
-	            connectedInterval: options.connectedInterval || 15000,
-	            disconnectedInterval: options.disconnectedInterval || 200,
-	            unstableInterval: options.unstableInterval || 1500,
-	            maxInterval: options.maxInterval || 60000,
-	            unstableThreshold: options.unstableThreshold || 4,
-	            recentOfflineWindow: options.recentOfflineWindow || 120000,
-	            testUrl: options.testUrl || 'https://jsonplaceholder.typicode.com/posts/1',
-	            timeout: options.timeout || 5000,
-	            ...options
-	        };
-	        
-	        this.currentInterval = this.calculateInterval();
-	        this.init();
-	    }
-	    
-	    init() {
-	        this.updateStatusDisplay();
-	        this.startMonitoring();
-	        this.attachEventListeners();
-	    }
-	    
-	    getStoredOfflineCount() {
-	        try {
-	            return parseInt(sessionStorage.getItem("offlineCount")) || 0;
-	        } catch (e) {
-	            return 0;
-	        }
-	    }
-	    
-	    setStoredOfflineCount(count) {
-	        try {
-	            sessionStorage.setItem("offlineCount", count.toString());
-	        } catch (e) {
-	            console.warn('SessionStorage not available');
-	        }
-	    }
-	    
-	    calculateInterval() {
-	        if (!this.isConnected) {
-	            return this.offlineCount > this.config.unstableThreshold 
-	                ? this.config.unstableInterval 
-	                : this.config.disconnectedInterval;
-	        }
-	        
-	        const baseConnectedInterval = this.config.connectedInterval;
-	        if (this.offlineCount > this.config.unstableThreshold) {
-	            return Math.min(baseConnectedInterval * 0.5, this.config.maxInterval);
-	        }
-	        
-	        return Math.min(baseConnectedInterval, this.config.maxInterval);
-	    }
-	    
-	    async checkConnection() {
-	        try {
-	            const controller = new AbortController();
-	            const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
-	            
-	            const response = await fetch(this.config.testUrl, {
-	                method: 'HEAD',
-	                cache: 'no-cache',
-	                signal: controller.signal
-	            });
-	            
-	            clearTimeout(timeoutId);
-	            return response.ok;
-	        } catch (error) {
-	            return false;
-	        }
-	    }
-	    
-	    async performConnectionCheck() {
-	        const wasConnected = this.isConnected;
-	        this.isConnected = await this.checkConnection();
-	        
-	        if (wasConnected && !this.isConnected) {
-	            this.handleOfflineTransition();
-	        }
-	        
-	        if (!wasConnected && this.isConnected) {
-	            this.handleOnlineTransition();
-	        }
-	        
-	        this.updateStatusDisplay();
-	        this.adjustCheckInterval();
-	    }
-	    
-	    handleOfflineTransition() {
-	        const currentTime = Date.now();
-	        
-	        if (currentTime - this.lastOfflineTime <= this.config.recentOfflineWindow) {
-	            this.offlineCount++;
-	            this.setStoredOfflineCount(this.offlineCount);
-	        }
-	        
-	        this.lastOfflineTime = currentTime;
-	    }
-	    
-	    handleOnlineTransition() {
-	        if (this.offlineCount > 0) {
-	            this.offlineCount = Math.max(this.offlineCount - 2, 0);
-	            this.setStoredOfflineCount(this.offlineCount);
-	        }
-	    }
-	    
-	    updateStatusDisplay() {
-	        if (!this.statusElement) return;
-	        
-	        if (this.isConnected) {
-	            this.statusElement.style.display = 'none';
-	        } else {
-	            this.statusElement.style.display = 'block';
-	            this.statusElement.textContent = this.offlineCount > this.config.unstableThreshold 
-	                ? "Your network connection is unstable."
-	                : "No internet connection.";
-	        }
-	    }
-	    
-	    adjustCheckInterval() {
-	        const newInterval = this.calculateInterval();
-	        
-	        if (newInterval !== this.currentInterval) {
-	            this.currentInterval = newInterval;
-	            this.restartMonitoring();
-	        }
-	    }
-	    
-	    startMonitoring() {
-	        if (this.intervalId) {
-	            clearInterval(this.intervalId);
-	        }
-	        
-	        this.intervalId = setInterval(() => {
-	            this.performConnectionCheck();
-	        }, this.currentInterval);
-	    }
-	    
-	    restartMonitoring() {
-	        this.startMonitoring();
-	    }
-	    
-	    attachEventListeners() {
-	        window.addEventListener("offline", () => {
-	            this.isConnected = false;
-	            this.handleOfflineTransition();
-	            this.updateStatusDisplay();
-	            this.adjustCheckInterval();
-	        });
-	        
-	        window.addEventListener("online", () => {
-	            this.performConnectionCheck();
-	        });
-	    }
-	    
-	    destroy() {
-	        if (this.intervalId) {
-	            clearInterval(this.intervalId);
-	            this.intervalId = null;
-	        }
-	    }
-	    
-	    forceCheck() {
-	        return this.performConnectionCheck();
-	    }
-	    
-	    getStatus() {
-	        return {
-	            isConnected: this.isConnected,
-	            offlineCount: this.offlineCount,
-	            currentInterval: this.currentInterval
-	        };
-	    }
-	}
-
-	function createNetworkMonitor(elementId, options = {}) {
-	    return new NetworkMonitor(elementId, options);
-	}
-
-	if (typeof module !== 'undefined' && module.exports) {
-	    module.exports = { NetworkMonitor, createNetworkMonitor };
-	}
-	
-	const monitor = new NetworkMonitor('wifi-status'); /* Init Check */
-	
-	
+	/* Connection Status */
+    createNetworkMonitor('wifi-status', {
+        debug: false,
+        testUrl: 'https://jsonplaceholder.typicode.com/posts/1'
+    });
+    /* --end-- */
 	
 	function isContentModified() {
 		const element = document.querySelector('#editor');
@@ -3875,7 +4123,7 @@
 
 	function resetModS() {
 	    document.querySelector('#editor').dataset.modified = 'false';
-	    if (document.title.includes('*')) document.title = document.title.substring(1);
+	    if (document.title.includes('*')) setTitle(document.title.substring(1));
 	}
 
 	window.addEventListener('beforeunload', (event) => {
@@ -3889,7 +4137,7 @@
 	const element = document.querySelector('#editor');
 	element.addEventListener('input', () => {
         if (element.dataset.modified != 'true') {
-        	document.title = `*${document.title}`;
+        	setTitle(`*${document.title}`);
         	element.dataset.modified = 'true';
         } else if (element.textContent === '') {
         	resetModS();
@@ -3945,6 +4193,20 @@
 	        }
 	    }
     });
+    
+    function adjustElementHeight() {
+        const target = document.querySelector('.saved-files-list');
+        if (target) target.style.height = `${window.innerHeight * 0.45}px`;
+    }
+
+    let resizeTimeout;
+
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(adjustElementHeight, 200);
+    });
+
+    adjustElementHeight();
 
 	document.addEventListener('DOMContentLoaded', async () => {
 		    /* Save button handler */
@@ -3966,6 +4228,28 @@
 
 		    const reader = new FileReader();
 		    reader.onload = async (event) => {
+			    if (!file.name.includes(".ebf")) {
+			    	const openResp = await suggest("Not EBF File", "This is not a .ebf file. It may contain malware.<br>Do you still wish to open it?");
+			    	if (openResp) {
+			    		await delay(10);
+			    		insertToEditor(event.target.result);
+			    		async function insertToEditor(content) {
+						    const CHUNK_SIZE = 30000;
+						    editor.textContent = '';
+						    if (content.length <= CHUNK_SIZE) {
+						    	editor.innerText = content;
+						    	return;
+					    	}
+						    for (let i = 0; i < content.length; i += CHUNK_SIZE) {
+						        editor.textContent += content.slice(i, i + CHUNK_SIZE);
+						        await new Promise(r => setTimeout(r, 5));
+						    }
+						}
+			    		hideModal();
+			    	}
+					return;
+			    }
+			    
 			    await openFile({
 			        fileContent: event.target.result,
 			        password: 'null',
@@ -3984,7 +4268,6 @@
 		updateFontOptions();
 		
 		if (!isConnected) {
-			get('wifi-status').style.display = 'block';
 			console.warn('No internet connection.');
 		}
 		
@@ -4038,11 +4321,12 @@
 	});
 	
 	function openingFile() {
-		document.title = "Opening file...";
+		setTitle("Opening file...");
 		if (params.has('s_h')) {
 			syntax_highlight = params.get("s_h");
 		}
 	}
+
 	
 	/* WORD Export */
 	function exportDoc(el) {
@@ -4058,14 +4342,18 @@
 	        console.error("Failed to generate DOCX");
 	        return;
 	    }
-
-	    const link = document.createElement("a");
-	    link.href = URL.createObjectURL(docx);
-	    link.download = `${fileName.replace(/[\/\\?*:|"<>]/g, '_')}.docx`;
+	    
+		const link = document.createElement("a");
+	    link.href = URL.createObjectURL(content);
+	    link.download = `${name.replace(/[\/\\?*:|"<>]/g, '_')}.docx`;
 
 	    document.body.appendChild(link);
 	    link.click();
 	    document.body.removeChild(link);
 
 	    URL.revokeObjectURL(link.href);
+	}
+	
+	function exportPDF() {
+	  	html2pdf().from(editor.innerHTML).save("download.pdf");
 	}
