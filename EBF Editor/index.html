@@ -14,15 +14,15 @@
 <link rel="stylesheet" href="ebf-syntax-highlight.css">
 </head>
     <body>
-	<div id="loverlay" class="loading-overlay" style="display: none;">
+		<div id="loverlay" class="loading-overlay" style="display: none;">
 	    <div class="spinner">
 	        <div class="loading-spinner"></div>
 	        <span class="ls_text" id="ls_text">Working on it...</span>
 	    </div>
 	</div>
 
-	<div id="wifi-status" style="display: none;">
-		<h4>You are currently offline. Some features may not work as expected.</h4>
+	<div id="wifi-status">
+		<h4 id="wifi-text">You are currently offline. Some features may not work as expected.</h4>
 		<button class="close" style="color: white; font-size: 30px; top: 6px;" title="Close" onclick="get('wifi-status').style.display = 'none';">&times;</button>
 	</div>
 
@@ -33,10 +33,10 @@
 			<input type="text" id="username_val">
 			<label for="password_val" class="label">Enter Password</label>
 			<input type="password" id="password_val">
-			<a class="center hide" id="fp" style="margin-bottom: 15px" onclick='window.open("verify-account.html", "_blank")'>Forgot Password?</a>
+			<a class="center hide" id="fp" style="margin-bottom: 15px" onclick='verifyAccount()'>Forgot Password?</a>
 			<alert style="display: none; margin: 5px;" id="accountAlert">- NO DATA -</alert>
 			<button onclick="signIn()" title="Sign into your account">Sign In</button>
-			<a class="fwdLink center" onclick='window.open("create-account.html", "_blank", "width=450,height=700"); alert("Creating Account");'>Create account</a>
+			<a class="fwdLink center" onclick='createAccount()'>Create account</a>
 			<button class="cancel" onclick="signIn_cancel()">Cancel</button>
 		</div>
 	</div>
@@ -59,10 +59,25 @@
 
 	<div id="settingsModal" class="modal" title="Settings">
 	    <h2>Settings</h2>
-
+		
+		<div name="Preferences" title="User Preferences">
+    		<h3 class="settings-head">Preferences</h3>
+    		<div class="dropdown">
+    			<h4 onclick="toggleDropdown(this)">Touch <span class="arrow">▼</span></h4>
+    			<div class="dropdown-content">
+    				<label>Enable Touch Enhancements</label>
+    				<select id="touch_enhancements_select" style="width: min-content; float: right;" title="Enable Touch Enhancements">
+    					<option value="true">Yes</option>
+    					<option value="false">No</option>
+					</select>
+				</div>
+			</div>
+		</div>
+		
+		<div class="divide"></div>
 	    <!-- Theme Selection -->
 	    <div name="Presets" style="margin-bottom: 30px;">
-	        <h3 style="margin-bottom: 10px;">Theme</h3>
+	        <h3 style="margin-bottom: 10px;" class="settings-head">Theme</h3>
 	        <div class="save-options">
 	        	<div class="save-option" onclick="applyTheme('default')" title="Default Theme">
 	                <strong>Default Theme</strong>
@@ -92,12 +107,16 @@
 	                <strong>Dark Rainbow</strong>
 	                <p class="p1">A version of the Rainbow theme with darker colors</p>
 	            </div>
+				<div id="createNewTheme" class="save-option center" onclick="createCustomTheme()" title="Create New" style="padding: 8px; border: 2px dashed var(--border-color);">
+	                <strong style="font-size: 35px;">+</strong>
+	                <p class="p1" style="margin-top: 4px;">Create your own custom theme</p>
+	            </div>
 	        </div>
 	    </div>
 
 	    <!-- Custom Colors -->
-	    <div name="Custom Options" style="margin-bottom: 20px;">
-	        <h3 style="margin-bottom: 10px;">Customize Colors</h3>
+	    <div name="Custom Options">
+	        <h3 style="margin-bottom: 10px;" class="settings-head">Customize Colors</h3>
 
 	        <!-- Primary Colors -->
 	        <div class="dropdown">
@@ -246,7 +265,7 @@
 	        <div class="divide"></div>
 	        
         	<div name="Text Details" title="Text Statistics">
-        		<h3>Text Statistics</h3>
+        		<h3 class="settings-head">Text Statistics</h3>
         		
 	        		<div class="dropdown">
 	        			<h4 onclick="toggleDropdown(this)">Characters (with spaces): <span class="arrow">▼</span></h4>
@@ -285,29 +304,29 @@
 			</div>
 			
 			<div name="Other Settings" title="Other Settings">
-        		<h3>Other Settings</h3>
-        		
-	        		<div class="dropdown">
-	        			<h4 onclick="toggleDropdown(this)">Loading Documents <span class="arrow">▼</span></h4>
-	        			<div class="dropdown-content">
-	        				<input type="checkbox" id="prefCheckbox" style="width: min-content;">
-	        				<label for="prefCheckbox">Auto load previously open files when reloading the page</label>
-        				</div>
+        		<h3 class="settings-head">Other Settings</h3>
+        		<div class="dropdown">
+        			<h4 onclick="toggleDropdown(this)">Loading Documents <span class="arrow">▼</span></h4>
+        			<div class="dropdown-content">
+        				<input type="checkbox" id="prefCheckbox" style="width: min-content;">
+        				<label for="prefCheckbox">Auto load previously open files when reloading the page</label>
     				</div>
-    				
+				</div>
 			</div>
 	        
 	        <div class="divide"></div>
 	        
 	        <div id="version">
 	        	<h3>Version</h3>
-	        	<p class="p2" id="Version"> - 18.0</p>
+	        	<p class="p2" id="Version"> - 19.1</p>
 	        </div>
 
 	        <div class="center">
 	            <button onclick="resetTheme()" class="cancel" title="Revert back to saved defaults">Reset</button>
 	            <button onclick="hideSettingsModal()" title="Close and save (escape)">Close</button>
 	        </div>
+	        
+	        <p class="p2 center" style="margin-top: 30px; font-family: Inconsolata;">-  EBF Editor Desktop Inc. All Rights Reserved  -</p>
 	    </div>
 	</div>
 
@@ -316,23 +335,24 @@
 		<div id="editor" contenteditable="true" role="textbox" aria-label="Content editor"></div>
 	</div>
 	
+	<!-- TEXT MENU -->
 	<div id="f_textmenu" class="hideF hide">
 	  <button onmousedown="bold()" aria-label="Make text bold" id="bold" title="Bold"><b>B</b></button>
 	  <button onmousedown="italic()" aria-label="Make text italic" id="italic" title="Italic"><i>I</i></button>
 	  <button onmousedown="underline()" aria-label="Make text underlined" id="underline" title="Underline"><u>U</u></button>
 	  <button onmousedown="changeFontSize(false)" aria-label="Decrease font size" title="Font size down (ctrl + -)">A-</button>
 	  <button onmousedown="changeFontSize(true)" aria-label="Increase font size" title="Font size up (ctrl + =)">A+</button>
-	  <button onclick="execCmd('insertUnorderedList')" aria-label="Insert dot point list" title="Insert Dot point List">UL</button>
-	  <button onclick="execCmd('insertOrderedList')" aria-label="Insert numbered list" title="Insert Numbered List">OL</button>
+	  <button onclick="highlightSelection()" style="padding: 5px;" title="Toggle highlighter"><svg width="20" height="15" viewBox="0 0 20 20"><path d="M3.5 2c.28 0 .5.22.5.5v4c0 .28.22.5.5.5h11a.5.5 0 00.5-.5v-4a.5.5 0 011 0v4c0 .65-.42 1.2-1 1.41V9a2 2 0 01-2 2v2.07a2 2 0 01-1.1 1.8l-6.18 3.08A.5.5 0 016 17.5V11a2 2 0 01-2-2V7.91c-.58-.2-1-.76-1-1.41v-4c0-.28.22-.5.5-.5zM5 8v1a1 1 0 001 1h8a1 1 0 001-1V8H5zm2 3v5.7l5.45-2.73a1 1 0 00.55-.9V11H7z"></path><path d="M16 3h-2v4h1.5a.5.5 0 00.5-.5V3zm-3 4V3H4v3.5c0 .28.22.5.5.5H13zm-6 9.7V11h6v2.07a1 1 0 01-.55.9L7 16.69z" fill="none"></path></svg></button>
+	  <button onclick="execCmd('insertUnorderedList')" aria-label="Insert dot point list" title="New Dot Point">UL</button>
+	  <button onclick="execCmd('insertOrderedList')" aria-label="Insert numbered list" title="New Numbered List">OL</button>
 	</div>
 	<div id="flt_arr" class="hide"></div>
 
 	<div class="toolbar" id="textToolbar" role="toolbar" aria-label="Text formatting tools" title="Text formatting tools">
-	    <button class="save" id="save" aria-label="Save the document with options" title="Save the document with options">Save</button>
+	    <button class="save" id="save" aria-label="Save the document" title="Save document with options">Save As</button>
 		<div class="select">
 			<button class="select-button">Select Font</button>
 			<ul class="select-list">
-				<!-- Options added dynamically -->
 			</ul>
 		</div>				
 	    <button onclick="insertTable()" aria-label="Insert table" title="Insert a table">Table</button>
@@ -369,11 +389,11 @@
 	    <button onclick="selectPenColor()" aria-label="Select pen tool" title="Select pen tool">Pen</button>
 	    <button onclick="selectHighlighter()" aria-label="Select highlighter tool" title="Select highlighter tool">Highlighter</button>
 	    <input type="color" id="penColor" value="#000000" aria-label="Select color" title="Select color">
-	    <button onclick="setInkThickness(1)" aria-label="Set thin line width" title="Set thin line width">Super Thin</button>
-	    <button onclick="setInkThickness(5)" aria-label="Set thin line width" title="Set thin line width">Thin</button>
-	    <button onclick="setInkThickness(10)" aria-label="Set medium line width" title="Set medium line width">Medium</button>
-	    <button onclick="setInkThickness(20)" aria-label="Set thick line width" title="Set thick line width">Thick</button>
-	    <button onclick="setInkThickness(45)" aria-label="Set thick line width" title="Set thick line width">Extra Thick</button>
+	    <button onclick="setbInkThickness(1)" aria-label="Set thin line width" title="Set thin line width">Super Thin</button>
+	    <button onclick="setbInkThickness(5)" aria-label="Set thin line width" title="Set thin line width">Thin</button>
+	    <button onclick="setbInkThickness(10)" aria-label="Set medium line width" title="Set medium line width">Medium</button>
+	    <button onclick="setbInkThickness(20)" aria-label="Set thick line width" title="Set thick line width">Thick</button>
+	    <button onclick="setbInkThickness(45)" aria-label="Set thick line width" title="Set thick line width">Extra Thick</button>
 	    <button onclick="saveAndHideDrawingToolbar()" aria-label="Save drawings and exit" title="Save and exit">Done</button>
 	</div>
 	
@@ -381,6 +401,7 @@
 		<button title="Crop Image" id="cropBtn" onclick="toggleCrop()">Crop</button>
 		<button class="hide" title="Uncrop Image" id="uncrop" onclick="uncropImage()">Uncrop</button>
 		<button class="hide" title="Reset Image Rotation to 0" id="rotateReset" onclick="resetRotation()">Reset Rotation</button>
+		<button class="hide" title="Reset Horizontal and Vertical stretch and Resize" id="resetShrinks" onclick="resetShrinkAdj()">Reset Image Stretch</button>
 		<button onclick="layerUp()" title="Bring image up">Layer up</button>
 		<button onclick="layerDown()" title="Bring image down">Layer down</button>
 	</div>
@@ -400,7 +421,7 @@
 	        <div id="dir_list"></div>
 	        <input id="searchBar" placeholder="Search here..." autocomplete="off" autocorrect="off">
 	        <div class="saved-files-list" id="savedFilesList"></div>
-	        <div id="create-folder" onclick="crFolder()" title="Create New Folder"><svg xmlns="http://www.w3.org/2000/svg" width="22px" height="20px" viewBox="0 0 24 24" stroke="var(--text-primary)" stroke-width="2.5" stroke-linecap="round" fill="none" style="padding-right: 5px;"><path d="M17 12L7 12M12 17L12 7"/> <circle cx="12" cy="12" r="10"/></svg>Create Folder</div>
+	        <div id="create-folder" style="display: none" onclick="crFolder()" title="Create New Folder"><svg xmlns="http://www.w3.org/2000/svg" width="22px" height="20px" viewBox="0 0 24 24" stroke="var(--text-primary)" stroke-width="2.5" stroke-linecap="round" fill="none" style="padding-right: 5px;"><path d="M17 12L7 12M12 17L12 7"/> <circle cx="12" cy="12" r="10"/></svg>Create Folder</div>
 	        <div class="center" style="margin-top: 15px;">
 	            <button id="confopen"></button>
 	            <button onclick="hideModal()" class="cancel" title="Cancel">Cancel</button>
@@ -412,14 +433,11 @@
 	    <h2>Save Options</h2>
 	    <div class="save-options">
 	        <div class="save-option" onclick="selectSaveOption('encrypted')">
-	            <strong>Save with Encryption</strong>
-	            <p class="p1">Secure your document with password protection</p>
-	        </div>
-	        <div class="save-option" onclick="selectSaveOption('unencrypted')">
-	            <strong>Save without Encryption</strong>
-	            <p class="p1">Save document without password protection</p>
+	            <strong>Encrypted</strong>
+	            <p class="p1">Secure your file with password protection</p>
 	        </div>
 	    </div>
+	    <hr>
 	    <div class="save-options">
 	        <div class="save-option" id="gh" onclick="">
 	            <strong>Save to Cloud</strong>
@@ -452,7 +470,10 @@
 	  
 	<input type="file" id="fileInput" accept=".ebf" style="display:none">
 	
-	<script src="ebf-log.js" defer></script>	    
-<script src="ebf-script.js"></script>
+	<script src="ebf-log.js" defer></script>
+	<script src="https://unpkg.com/html-docx-js@0.3.1/dist/html-docx.js" defer></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+	<script src="NetworkMonitor.js"></script>	    
+    <script src="ebf-script.js"></script>
 </body>
 </html>
