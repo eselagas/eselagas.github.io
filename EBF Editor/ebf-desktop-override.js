@@ -1,6 +1,4 @@
-	/* Modified script for Desktop functionality replacement */
-    const html = true;
-
+/* Modified script for Desktop functionality replacement */
 	function setTitle(title) {
 		document.title = title;
 	}
