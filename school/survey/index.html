@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Survey</title>
-  <link id="webIcon" rel="icon" href="https://www.svgrepo.com/show/451366/survey.svg">
+  <link id="webIcon" rel="icon" href="./survey_icon.svg">
   <style>
     :root {
 	  --primary-color: #3366cc;
@@ -287,20 +287,25 @@
  	let survey_loc;
   	let githubToken;
  	let saveFolder = "DEV";
- 	if (params.has("verify")) {
+	if (params.has("verify") && params.has("shml")) {
  	    saveFolder = params.get("folder");
  	    survey_loc = params.get("shml");
 	    githubToken = params.get("access_token");
-		setCookie("_folder", saveFolder, 1);
-		setCookie("_shml", survey_loc, 1);
-		setCookie("_token", githubToken, 1);
+		    const url = new URL(window.location);
+			url.searchParams.delete('access_token'); /* Clear the token immediately */
+			window.history.replaceState({}, '', url);
+		sessionStorage.setItem("_folder", saveFolder);
+		sessionStorage.setItem("_shml", survey_loc);
+		sessionStorage.setItem("_token", githubToken);
 		setCookie("survey.html", true, 1);
-	} else if (getCookie("survey.html")) {
-		saveFolder = getCookie("_folder");
- 	    survey_loc = getCookie("_shml");
-	    githubToken = getCookie("_token");
+	} else if (getCookie("survey.html") && sessionStorage.getItem("_token")) { /* For reloads; gone after page close */
+		saveFolder = sessionStorage.getItem("_folder");
+ 	    survey_loc = sessionStorage.getItem("_shml");
+	    githubToken = sessionStorage.getItem("_token");
+	} else if (getCookie("survey.html")) { /* Only survey.html, token lost */
+		get("msg").textContent = "Your session timed out. Try reopening the survey.";
 	} else {
-		get("msg").textContent = "Your session timed out. Please try again later!";
+		get("msg").textContent = "We encountered an error loading the survey. Please try again.";
 	}
 
 	document.addEventListener("DOMContentLoaded", async function () {
