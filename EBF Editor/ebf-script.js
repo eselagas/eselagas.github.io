@@ -112,6 +112,8 @@ let fontSize = 14, ln_num = 1, lastFont = "Roboto", lastAlignment = 'left', sele
 		});
 	}
 	
+	let gtoken = '';
+	
 	let fileContents = "";
 
 	async function fetchFile(url) {
