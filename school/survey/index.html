@@ -284,7 +284,8 @@
   </div>
  <script>
  	const params = new URLSearchParams(window.location.search);
- 	let survey_loc;
+	document.addEventListener("DOMContentLoaded", async function () {
+	let survey_loc;
   	let githubToken;
  	let saveFolder = "DEV";
 	if (params.has("verify") && params.has("shml")) {
@@ -308,7 +309,6 @@
 		get("msg").textContent = "We encountered an error loading the survey. Please try again.";
 	}
 
-	document.addEventListener("DOMContentLoaded", async function () {
 	const url = "https://api.github.com/repos/eselagas/app.files/contents/docs/survey_data/" + survey_loc;
 	const options = {
 	  method: "GET",
